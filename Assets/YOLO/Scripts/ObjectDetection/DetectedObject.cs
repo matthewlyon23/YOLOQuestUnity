@@ -1,6 +1,4 @@
 using UnityEngine;
-using UnityEngine.UIElements;
-using YOLOQuestUnity.Inference;
 
 namespace YOLOQuestUnity.ObjectDetection
 {
