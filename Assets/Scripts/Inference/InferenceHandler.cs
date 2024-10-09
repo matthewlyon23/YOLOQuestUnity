@@ -1,4 +1,5 @@
 using Unity.Sentis;
+using UnityEngine;
 
 namespace YOLOQuestUnity.Inference
 {
@@ -7,6 +8,6 @@ namespace YOLOQuestUnity.Inference
         protected Model _model;
         protected Worker _worker;
 
-        protected abstract Tensor<float> Run(T input);
+        public abstract Awaitable<Tensor<float>> Run(T input);
     }
 }
