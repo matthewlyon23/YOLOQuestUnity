@@ -14,7 +14,7 @@ namespace YOLOQuestUnity.ObjectDetection
         {
             _size = size;
             _model = ModelLoader.Load(modelAsset);
-            _worker = new Worker(_model, BackendType.CPU);
+            _worker = new Worker(_model, BackendType.GPUCompute);
             _textureAnalyser = new TextureAnalyser(_worker);
         }
 

@@ -5,7 +5,6 @@ namespace YOLOQuestUnity.ObjectDetection
 {
     public class TextureAnalyser
     {
-        private Texture2D _texture;
         private Worker _worker;
         private Tensor<float> _input;
 
