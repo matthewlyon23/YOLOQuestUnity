@@ -1446,6 +1446,7 @@ GameObject:
   m_Component:
   - component: {fileID: 913416982}
   - component: {fileID: 913416981}
+  - component: {fileID: 913416983}
   m_Layer: 0
   m_Name: QuestScreenCaptureTextureManager
   m_TagString: Untagged
@@ -1500,6 +1501,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &913416983
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 913416980}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f1fed9cb9380d8448dababac406f99b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ScreenCaptureStart:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1069081909
 GameObject:
   m_ObjectHideFlags: 0
@@ -2643,7 +2659,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Size: 640
   _model: {fileID: 5022602860645237092, guid: 9ab88419027bb294dba1cce4c85697b2, type: 3}
-  _inputTexture: {fileID: 2800000, guid: 9d3a07e50358ec7459fdb0d3a4668cf5, type: 3}
+  _YOLOCamera: {fileID: 0}
   T1: {fileID: 757534624}
   T2: {fileID: 393463858}
   T3: {fileID: 707896071}

@@ -5,6 +5,7 @@ using Unity.Sentis;
 using UnityEngine;
 using YOLOQuestUnity.Inference;
 using YOLOQuestUnity.ObjectDetection;
+using YOLOQuestUnity.Utilities;
 
 namespace YOLOQuestUnity.YOLO
 {
@@ -15,6 +16,7 @@ namespace YOLOQuestUnity.YOLO
 
         [SerializeField] private int Size = 640;
         [SerializeField] private ModelAsset _model;
+        [SerializeField] private VideoFeedManager _YOLOCamera;
 
         #endregion
 
@@ -26,7 +28,7 @@ namespace YOLOQuestUnity.YOLO
         private bool inferencePending = false;
         Awaitable<Tensor<float>> analysisResult;
         Tensor<float> analysisResultTensor;
-        [SerializeField] private Texture2D _inputTexture;
+        private Texture2D _inputTexture;
 
         #endregion
 
@@ -83,13 +85,14 @@ namespace YOLOQuestUnity.YOLO
 
             if (_inferenceHandler == null) return;
 
+            if (_YOLOCamera == null) return;
 
             try
             {
                 if (analysisResult == null || !inferencePending)
                 {
                     Debug.Log("Getting texture");
-                    if (_inputTexture == null) return;
+                    if ((_inputTexture = _YOLOCamera.GetTexture()) == null) return;
                     Debug.Log("Got texture");
                     Debug.Log("Starting YOLO analysis");
                     analysisResult = _inferenceHandler.Run(_inputTexture);
