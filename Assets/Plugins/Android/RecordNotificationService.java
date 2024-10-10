@@ -16,7 +16,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.unity3d.player.UnityPlayerActivity;
+import com.unity3d.player.UnityPlayerGameActivity;
 
 
 
@@ -38,7 +38,7 @@ public class RecordNotificationService extends Service {
 
 	private void startForeground() {
 
-		Intent activityIntent = new Intent(this, UnityPlayerActivity.class);
+		Intent activityIntent = new Intent(this, UnityPlayerGameActivity.class);
 		activityIntent.setAction("stop");
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, activityIntent, FLAG_IMMUTABLE);
 

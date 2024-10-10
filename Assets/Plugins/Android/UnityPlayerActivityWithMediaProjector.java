@@ -18,12 +18,12 @@ import android.os.Looper;
 import android.util.Log;
 
 import com.unity3d.player.UnityPlayer;
-import com.unity3d.player.UnityPlayerActivity;
+import com.unity3d.player.UnityPlayerGameActivity;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-public class UnityPlayerActivityWithMediaProjector extends UnityPlayerActivity {
+public class UnityPlayerActivityWithMediaProjector extends UnityPlayerGameActivity {
 
 	private static final int REQUEST_MEDIA_PROJECTION = 1;
 
