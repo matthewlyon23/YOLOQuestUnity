@@ -6,7 +6,7 @@ namespace YOLOQuestUnity.Utilities
 {
     public class PassthroughManager : VideoFeedManager
     {
-        private QuestScreenCaptureTextureManager _screenCaptureTextureManager;
+        [SerializeField] private QuestScreenCaptureTextureManager _screenCaptureTextureManager;
         private Texture2D _currentTexture;
 
         public UnityEvent ScreenCaptureStart = new();

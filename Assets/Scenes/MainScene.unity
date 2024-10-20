@@ -1448,7 +1448,7 @@ GameObject:
   - component: {fileID: 913416981}
   - component: {fileID: 913416983}
   m_Layer: 0
-  m_Name: QuestScreenCaptureTextureManager
+  m_Name: QuestScreenCaptureManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1467,7 +1467,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   startScreenCaptureOnStart: 1
-  flipTextureOnGPU: 0
+  flipTextureOnGPU: 1
   OnTextureInitialized:
     m_PersistentCalls:
       m_Calls: []
@@ -1513,6 +1513,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f1fed9cb9380d8448dababac406f99b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _screenCaptureTextureManager: {fileID: 913416981}
   ScreenCaptureStart:
     m_PersistentCalls:
       m_Calls: []
@@ -2659,7 +2660,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Size: 640
   _model: {fileID: 5022602860645237092, guid: 9ab88419027bb294dba1cce4c85697b2, type: 3}
-  _YOLOCamera: {fileID: 0}
+  _YOLOCamera: {fileID: 913416983}
   T1: {fileID: 757534624}
   T2: {fileID: 393463858}
   T3: {fileID: 707896071}
