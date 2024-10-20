@@ -79,10 +79,6 @@ namespace YOLOQuestUnity.YOLO
 
         void Update()
         {
-            //FrameCount++;
-
-            if (FrameCount != 0) return;
-
             if (_inferenceHandler == null) return;
 
             if (_YOLOCamera == null) return;
@@ -99,11 +95,12 @@ namespace YOLOQuestUnity.YOLO
                     Debug.Log("YOLO Analysis started");
                     inferencePending = true;
                 }
-                else if (inferencePending && analysisResult.GetAwaiter().IsCompleted)
+                if (inferencePending && analysisResult.GetAwaiter().IsCompleted)
                 {
                     Debug.Log("Got YOLO result");
                     analysisResultTensor = analysisResult.GetAwaiter().GetResult();
                     var detectedObjects = PostProcess(analysisResultTensor);
+                    analysisResultTensor.Dispose();
                     inferencePending = false;
                     Debug.Log("Collected YOLO results");
                     T1.text = $"{detectedObjects[0].CocoName} detected with confidence {detectedObjects[0].Confidence}";
