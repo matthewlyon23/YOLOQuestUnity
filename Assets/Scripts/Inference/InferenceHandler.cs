@@ -14,5 +14,9 @@ namespace YOLOQuestUnity.Inference
         public abstract IEnumerator RunWithLayerControl(T input);
 
         public abstract Worker GetWorker();
+
+        public abstract void DisposeTensors();
+
+        public abstract void OnDestroy();
     }
 }

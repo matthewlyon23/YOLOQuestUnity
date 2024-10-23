@@ -1,8 +1,12 @@
-﻿using System;
+﻿using Oculus.Interaction.DebugTree;
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using Unity.Sentis;
 using UnityEngine;
+using UnityEngine.Profiling;
 using YOLOQuestUnity.Inference;
 using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
@@ -17,6 +21,7 @@ namespace YOLOQuestUnity.YOLO
         [SerializeField] private int Size = 640;
         [SerializeField] private ModelAsset _model;
         [SerializeField] private VideoFeedManager _YOLOCamera;
+        [SerializeField] private uint _layersPerFrame = 10;
 
         #endregion
 
@@ -26,9 +31,11 @@ namespace YOLOQuestUnity.YOLO
         private int _frameCount;
         private int FrameCount { get => _frameCount; set => _frameCount = value % 30; }
         private bool inferencePending = false;
+        private bool readingBack = false;
         Awaitable<Tensor<float>> analysisResult;
         Tensor<float> analysisResultTensor;
         private Texture2D _inputTexture;
+        IEnumerator splitInferenceEnumerator;
 
         #endregion
 
@@ -75,6 +82,7 @@ namespace YOLOQuestUnity.YOLO
         void Start()
         {
             _inferenceHandler = new YOLOInferenceHandler(_model, 640);
+            if (_layersPerFrame == 0) _layersPerFrame = 1;
         }
 
         void Update()
@@ -83,34 +91,36 @@ namespace YOLOQuestUnity.YOLO
 
             if (_YOLOCamera == null) return;
 
+            if (readingBack) return;
+
             try
             {
-                if (analysisResult == null || !inferencePending)
+                if (!inferencePending)
                 {
-                    Debug.Log("Getting texture");
                     if ((_inputTexture = _YOLOCamera.GetTexture()) == null) return;
-                    Debug.Log("Got texture");
-                    Debug.Log("Starting YOLO analysis");
-                    analysisResult = _inferenceHandler.Run(_inputTexture);
-                    Debug.Log("YOLO Analysis started");
+                    splitInferenceEnumerator = _inferenceHandler.RunWithLayerControl(_inputTexture);
                     inferencePending = true;
                 }
-                if (inferencePending && analysisResult.GetAwaiter().IsCompleted)
+                if (inferencePending)
                 {
+                    int it = 0;
+                    while (splitInferenceEnumerator.MoveNext()) if (++it % _layersPerFrame == 0) return;
+                    
                     Debug.Log("Got YOLO result");
-                    analysisResultTensor = analysisResult.GetAwaiter().GetResult();
-                    var detectedObjects = PostProcess(analysisResultTensor);
-                    analysisResultTensor.Dispose();
-                    inferencePending = false;
-                    Debug.Log("Collected YOLO results");
-                    T1.text = $"{detectedObjects[0].CocoName} detected with confidence {detectedObjects[0].Confidence}";
-                    T2.text = $"{detectedObjects[1].CocoName} detected with confidence {detectedObjects[1].Confidence}";
-                    T3.text = $"{detectedObjects[2].CocoName} detected with confidence {detectedObjects[2].Confidence}";
+                    analysisResult = ((Tensor<float>)_inferenceHandler.GetWorker().PeekOutput()).ReadbackAndCloneAsync();
+                    readingBack = true;
+                    analysisResult.GetAwaiter().OnCompleted(() => {
+                        analysisResultTensor = analysisResult.GetAwaiter().GetResult();
+                        readingBack = false;
+
+                        var detectedObjects = PostProcess(analysisResultTensor);
+                        analysisResultTensor.Dispose();
+                        inferencePending = false;
+                        T1.text = $"{detectedObjects[0].CocoName} detected with confidence {detectedObjects[0].Confidence}";
+                        T2.text = $"{detectedObjects[1].CocoName} detected with confidence {detectedObjects[1].Confidence}";
+                        T3.text = $"{detectedObjects[2].CocoName} detected with confidence {detectedObjects[2].Confidence}";
+                    });
                 }
-            }
-            catch (NullReferenceException e)
-            {
-                Debug.Log(e.StackTrace);
             }
             finally
             {
@@ -120,6 +130,7 @@ namespace YOLOQuestUnity.YOLO
                     Debug.Log("Disposing of tensor");
                     analysisResultTensor.Dispose();
                     analysisResultTensor = null;
+                    _inferenceHandler.DisposeTensors();
                 }
             }
 
@@ -127,20 +138,54 @@ namespace YOLOQuestUnity.YOLO
 
         private List<DetectedObject> PostProcess(Tensor<float> result)
         {
+            List<DetectedObject> objects = new();
             float widthScale = Size / _inputTexture.width;
             float heightScale = widthScale;
 
-            Debug.Log($"Output Shape: {result.shape}");
-
-            List<DetectedObject> objects = new();
-
-            for (int i = 0; i < result.shape[1]; i++)
+            if (_model.name.Contains("yolov10"))
             {
-                int cocoClass = (int)result[0, i, 5];
-                objects.Add(new DetectedObject(result[0, i, 0] * widthScale, result[0, i, 2] * heightScale, result[0, i, 1] * widthScale, result[0, i, 3] * heightScale, cocoClass, classes[cocoClass], result[0, i, 4]));
+                for (int i = 0; i < result.shape[1]; i++)
+                {
+                    int cocoClass = (int)result[0, i, 5];
+                    objects.Add(new DetectedObject(result[0, i, 0] * widthScale, result[0, i, 2] * heightScale, result[0, i, 1] * widthScale, result[0, i, 3] * heightScale, cocoClass, classes[cocoClass], result[0, i, 4]));
+                }
+            }
+            else if (_model.name.Contains("yolo11"))
+            {
+                for (int i = 0; i < result.shape[2]; i++)
+                {
+                    (int cocoClass, float confidence) = FindMaxConfidence(result, i);
+                    if (confidence < 0.3f) continue;
+                    int centreX = (int)result[0, 0, i];
+                    int centreY = (int)result[0, 1, i];
+                    int width = (int)result[0, 2, i];
+                    int height = (int)result[0, 3, i];
+
+                    objects.Add(new DetectedObject(centreX - width / 2f, centreY - height / 2f, centreX + width / 2f, centreY + height / 2f, cocoClass, classes[cocoClass], confidence));
+                }
+
+                objects.OrderBy(x => -x.Confidence);
+            }
+            
+            return objects;
+        }
+
+        private (int, float) FindMaxConfidence(Tensor<float> tensor, int cell)
+        {
+            const int classOffset = 4;
+            int maxIndex = 0;
+            float maxConfidence = float.MinValue;
+            
+            for (int i = classOffset; i < tensor.shape[1]; i++)
+            {
+                if (tensor[0, i, cell] > maxConfidence)
+                {
+                    maxConfidence = tensor[0, i, cell];
+                    maxIndex = i;
+                }
             }
 
-            return objects;
+            return (maxIndex-classOffset, maxConfidence);
         }
     }
 }

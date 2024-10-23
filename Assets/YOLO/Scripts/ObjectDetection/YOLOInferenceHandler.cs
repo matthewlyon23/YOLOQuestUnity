@@ -17,6 +17,7 @@ namespace YOLOQuestUnity.ObjectDetection
             _model = ModelLoader.Load(modelAsset);
             _worker = new Worker(_model, BackendType.GPUCompute);
             _textureAnalyser = new TextureAnalyser(_worker);
+            
         }
 
         public override Worker GetWorker()
@@ -43,6 +44,17 @@ namespace YOLOQuestUnity.ObjectDetection
             ResizeTool.Resize(inputTexture, _size, _size, false, input.filterMode);
 
             return _textureAnalyser.AnalyseTextureWithLayerControl(inputTexture);
+        }
+
+        public override void DisposeTensors()
+        {
+            _textureAnalyser.OnDestroy();
+        }
+
+        public override void OnDestroy()
+        {
+            _worker.Dispose();
+            _textureAnalyser.OnDestroy();
         }
     }
 }
