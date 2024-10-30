@@ -2472,7 +2472,7 @@ MonoBehaviour:
   T2: {fileID: 393463858}
   T3: {fileID: 707896071}
   slider: {fileID: 113885230}
-  _tempTexture: {fileID: 2800000, guid: 9d3a07e50358ec7459fdb0d3a4668cf5, type: 3}
+  _tempTexture: {fileID: 0}
 --- !u!4 &1703198767
 Transform:
   m_ObjectHideFlags: 0
