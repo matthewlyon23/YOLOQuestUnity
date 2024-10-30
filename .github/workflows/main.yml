@@ -56,6 +56,10 @@ jobs:
     name: Build
     runs-on: windows-latest
     steps:
+      # Install necessary packages
+      - name: Install packages
+        run: Install-WindowsFeature Server-Media-Foundation
+      
       # Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
