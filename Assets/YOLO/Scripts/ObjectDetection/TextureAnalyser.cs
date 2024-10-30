@@ -16,7 +16,7 @@ namespace YOLOQuestUnity.ObjectDetection
 
         public Awaitable<Tensor<float>> AnalyseTexture(Texture2D texture)
         { 
-            TextureTransform textureTransform = new TextureTransform().SetChannelSwizzle().SetDimensions(-1, -1, 3);
+            TextureTransform textureTransform = new TextureTransform().SetChannelSwizzle().SetDimensions(640, 640, 3);
             _input = TextureConverter.ToTensor(texture, textureTransform);
         
             _worker.Schedule(_input);
@@ -28,7 +28,7 @@ namespace YOLOQuestUnity.ObjectDetection
 
         public IEnumerator AnalyseTextureWithLayerControl(Texture2D texture)
         {
-            TextureTransform textureTransform = new TextureTransform().SetChannelSwizzle().SetDimensions(-1, -1, 3);
+            TextureTransform textureTransform = new TextureTransform().SetChannelSwizzle().SetDimensions(640, 640, 3);
             _input = TextureConverter.ToTensor(texture, textureTransform);
 
             var output =_worker.ScheduleIterable(_input);
