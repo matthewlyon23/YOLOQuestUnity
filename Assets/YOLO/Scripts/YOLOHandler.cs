@@ -129,7 +129,7 @@ namespace YOLOQuestUnity.YOLO
                         var detectedObjects = PostProcess(analysisResultTensor);
                         analysisResultTensor.Dispose();
                         inferencePending = false;
-                        Debug.Log(detectedObjects.Count);
+                        
                         if (detectedObjects.Count > 2)
                         {
                             T1.text = $"{detectedObjects[0].CocoName} detected with confidence {detectedObjects[0].Confidence}";

@@ -29,7 +29,7 @@ namespace YOLOQuestUnity.ObjectDetection
                 var confidences = Functional.Gather(slicedClasses, 1, argMaxClasses);
                 var slicedPositions = outputs[0][.., 0..4, ..];
                 var concatenated = Functional.Concat(new FunctionalTensor[] { slicedPositions, argMaxClasses.Float(), confidences }, 1);
-                
+
                 _model = graph.Compile(concatenated);
             }
 
