@@ -1,34 +1,30 @@
-# Readme
+# YOLO Computer Vision on a Meta Quest 3 Headset
 
-Put a brief description of your code here. This should at least describe the file structure.
+A Unity 6000.0.20f1 project at root. Custom scripts and assets are in two folders, YOLO and Scripts at the root of the Assets folder.
 
 ## Build instructions
 
-**You must** include the instructions necessary to build and deploy this project successfully. If appropriate, also include 
-instructions to run automated tests. 
-
 ### Requirements
 
-List the all of the pre-requisites software required to set up your project (e.g. compilers, packages, libraries, OS, hardware)
-
-For example:
-
-* Python 3.7
-* Packages: listed in `requirements.txt` 
-* Tested on Windows 10
-
-or another example:
-
-* Requires Raspberry Pi 3 
-* a Linux host machine with the `arm-none-eabi` toolchain (at least version `x.xx`) installed
-* a working LuaJIT installation > 2.1.0
+- [Git LFS](https://git-lfs.com/)
+- [Unity 6000.0.20f1](https://unity.com/releases/editor/whats-new/6000.0.20#installs) with Android Build Support
+  - Note: Whilst it is possible to open the project in Unity Editor Version 6000.0.20f1 or *later*, it is not recommended as this can cause bugs. Proceed at your own risk.
+- Windows
+- Packages:
+  - Listed in [Packages/manifest.json](Packages/manifest.json)
+  - Necessary packages will be installed automatically by the Unity Editor
 
 ### Build steps
 
-List the steps required to build software. 
+To build the project, first [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) the repo using ssh:
 
-Hopefully something simple like `pip install -e .` or `make` or `cd build; cmake ..`. In
-some cases you may have much more involved setup required.
+    git clone git@github.com:AdmiralCasio/YOLOQuestUnity.git
+
+Open the project in the Unity Editor - this may take some time.
+
+Go to File/Build Profiles, make sure the target platform is set to Android, then click build.
+
+Alternatively, you can use the command line:
 
 ### Test steps
 
