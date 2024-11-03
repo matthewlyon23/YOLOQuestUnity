@@ -54,8 +54,12 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
-    steps:      
+    runs-on: windows-latest
+    steps:
+      # Install necessary packages
+      - name: Install packages
+        run: Install-WindowsFeature Server-Media-Foundation
+      
       # Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -95,6 +99,7 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           targetPlatform: Android
+          allowDirtyBuild: true
 
       # Output
       - uses: actions/upload-artifact@v3
