@@ -25,10 +25,10 @@ namespace YOLOQuestUnity.ObjectDetection
                 var outputs = Functional.Forward(_model, inputs);
                 
                 var slicedClasses = outputs[0][.., 4..84, ..];
-                var argMaxClasses = Functional.Float(Functional.ArgMax(slicedClasses, 1, true));
-                var confidences = Functional.ReduceMax(slicedClasses, 1, true);
+                var argMaxClasses = Functional.ArgMax(slicedClasses, 1, true);
+                var confidences = Functional.Gather(slicedClasses, 1, argMaxClasses);
                 var slicedPositions = outputs[0][.., 0..4, ..];
-                var concatenated = Functional.Concat(new FunctionalTensor[] { slicedPositions, argMaxClasses, confidences }, 1);
+                var concatenated = Functional.Concat(new FunctionalTensor[] { slicedPositions, argMaxClasses.Float(), confidences }, 1);
                 
                 _model = graph.Compile(concatenated);
             }

@@ -35,10 +35,9 @@ namespace YOLOQuestUnity.YOLO
         private int FrameCount { get => _frameCount; set => _frameCount = value % 30; }
         private bool inferencePending = false;
         private bool readingBack = false;
-        Awaitable<Tensor<float>> analysisResult;
-        Tensor<float> analysisResultTensor;
+        private Tensor<float> analysisResultTensor;
         private Texture2D _inputTexture;
-        IEnumerator splitInferenceEnumerator;
+        private IEnumerator splitInferenceEnumerator;
 
         #endregion
 
@@ -119,18 +118,18 @@ namespace YOLOQuestUnity.YOLO
                     int it = 0;
                     while (splitInferenceEnumerator.MoveNext()) if (++it % _layersPerFrame == 0) return;
                     
-                    Debug.Log("Got YOLO result");
                     readingBack = true;
                     analysisResultTensor = _inferenceHandler.PeekOutput() as Tensor<float>;
-                    analysisResult = (analysisResultTensor).ReadbackAndCloneAsync();
-                    analysisResult.GetAwaiter().OnCompleted(() =>
+                    var analysisResult = analysisResultTensor.ReadbackAndCloneAsync().GetAwaiter();
+                    analysisResult.OnCompleted(() =>
                     {
-                        analysisResultTensor = analysisResult.GetAwaiter().GetResult();
+                        analysisResultTensor = analysisResult.GetResult();
                         readingBack = false;
 
                         var detectedObjects = PostProcess(analysisResultTensor);
                         analysisResultTensor.Dispose();
                         inferencePending = false;
+                        Debug.Log(detectedObjects.Count);
                         if (detectedObjects.Count > 2)
                         {
                             T1.text = $"{detectedObjects[0].CocoName} detected with confidence {detectedObjects[0].Confidence}";
@@ -192,24 +191,6 @@ namespace YOLOQuestUnity.YOLO
             Profiler.EndSample();
             
             return objects;
-        }
-
-        private (int, float) FindMaxConfidence(ref Tensor<float> tensor, int cell)
-        {
-            const int classOffset = 4;
-            int maxIndex = 0;
-            float maxConfidence = float.MinValue;
-
-            for (int i = classOffset; i < tensor.shape[1]; i++)
-            {
-                if (tensor[0, i, cell] > maxConfidence)
-                {
-                    maxConfidence = tensor[0, i, cell];
-                    maxIndex = i;
-                }
-            }
-
-            return (maxIndex - classOffset, maxConfidence);
         }
     }
 }
