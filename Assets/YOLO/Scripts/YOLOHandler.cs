@@ -110,19 +110,23 @@ namespace YOLOQuestUnity.YOLO
                 if (!inferencePending)
                 {
                     if ((_inputTexture = _YOLOCamera.GetTexture()) == null) return;
+                    Debug.Log("Got texture");
                     splitInferenceEnumerator = _inferenceHandler.RunWithLayerControl(_inputTexture);
+                    Debug.Log("Inference started");
                     inferencePending = true;
                 }
                 if (inferencePending)
                 {
                     int it = 0;
                     while (splitInferenceEnumerator.MoveNext()) if (++it % _layersPerFrame == 0) return;
-                    
+
+                    Debug.Log("Inference complete");
                     readingBack = true;
                     analysisResultTensor = _inferenceHandler.PeekOutput() as Tensor<float>;
                     var analysisResult = analysisResultTensor.ReadbackAndCloneAsync().GetAwaiter();
                     analysisResult.OnCompleted(() =>
                     {
+                        Debug.Log("Got result");
                         analysisResultTensor = analysisResult.GetResult();
                         readingBack = false;
 
