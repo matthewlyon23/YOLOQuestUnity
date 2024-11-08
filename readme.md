@@ -35,3 +35,30 @@ Examples:
 * Run automated tests by running `pytest`
 * Start the software by running `bin/editor.exe` and opening the file `examples/example_01.bin`
 
+## Attribution
+
+"Bike - Untextured" (https://skfb.ly/oMtoN) by Mert Tetik is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"Low Poly 1950s Car" (https://skfb.ly/oI9IY) by Dezryelle is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"Motorcycle" (https://skfb.ly/otWPH) by animanyarty is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"1950's Styled Greyhound Bus" (https://skfb.ly/6YuSn) by GameDev Nick is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"Traffic Light" (https://skfb.ly/6WnDx) by Lyskilde is licensed under Creative Commons Attribution-NonCommercial (http://creativecommons.org/licenses/by-nc/4.0/).
+
+"Trail of the Wretched Asset - Bench" (https://skfb.ly/pqQtX) by J.Rea14 is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"American shorthair cat Untextured" (https://skfb.ly/p8FYC) by Mud The Superdurty King is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"Low Poly Dog" (https://skfb.ly/orIDQ) by gallacs is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"Backpack" (https://skfb.ly/o6LKA) by irovetskiy is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"Elegant umbrella" (https://skfb.ly/UnEo) by Araon is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"Pok3r Simple model" (https://skfb.ly/MwHt) by catanddogsoup is licensed under Creative Commons Attribution-NonCommercial (http://creativecommons.org/licenses/by-nc/4.0/).
+
+"Laptop" (https://skfb.ly/6RVFt) by Aullwen is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"TV" (https://skfb.ly/oxAqG) by CN Entertainment is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
