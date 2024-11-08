@@ -9,12 +9,12 @@ namespace YOLOQuestUnity.ObjectDetection
         public string CocoName { get; private set; }
         public float Confidence { get; private set; }
 
-        public DetectedObject(float minX, float minY, float maxX, float maxY, int cocoClass, string cocoName, float confidence)
+        public DetectedObject(float centreX, float centreY, float width, float height, int cocoClass, string cocoName, float confidence)
         {
             CocoClass = cocoClass;
             CocoName = cocoName;
             Confidence = confidence;
-            BoundingBox = new Rect(minX, minY, maxX - minX, maxY - minX);
+            BoundingBox = new Rect((int)centreX, (int)centreY, (int)width, (int)height);
         }
 
         

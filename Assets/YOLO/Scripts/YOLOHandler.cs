@@ -128,28 +128,25 @@ namespace YOLOQuestUnity.YOLO
 
                         var detectedObjects = PostProcess(analysisResultTensor);
                         analysisResultTensor.Dispose();
+                        _inferenceHandler.DisposeTensors();
                         inferencePending = false;
                         
                         if (detectedObjects.Count > 2)
                         {
-                            T1.text = $"{detectedObjects[0].CocoName} detected with confidence {detectedObjects[0].Confidence}";
-                            T2.text = $"{detectedObjects[1].CocoName} detected with confidence {detectedObjects[1].Confidence}";
-                            T3.text = $"{detectedObjects[2].CocoName} detected with confidence {detectedObjects[2].Confidence}";
+                            T1.text = $"{detectedObjects[0].CocoName} detected with confidence {detectedObjects[0].Confidence} at x:{detectedObjects[0].BoundingBox.x} y:{detectedObjects[0].BoundingBox.y}, {detectedObjects[0].BoundingBox.width} {detectedObjects[0].BoundingBox.height}";
+                            T2.text = $"{detectedObjects[1].CocoName} detected with confidence {detectedObjects[1].Confidence} at x:{detectedObjects[1].BoundingBox.x} y:{detectedObjects[1].BoundingBox.y}, {detectedObjects[1].BoundingBox.width} {detectedObjects[1].BoundingBox.height}";
+                            T3.text = $"{detectedObjects[2].CocoName} detected with confidence {detectedObjects[2].Confidence} at x:{detectedObjects[2].BoundingBox.x} y:{detectedObjects[2].BoundingBox.y}, {detectedObjects[2].BoundingBox.width} {detectedObjects[2].BoundingBox.height}";
                         }
                     });
 
                 }
             }
-            finally
+            catch
             {
-
-                if (!inferencePending && analysisResultTensor != null)
-                {
-                    Debug.Log("Disposing of tensor");
-                    analysisResultTensor.Dispose();
-                    analysisResultTensor = null;
-                    _inferenceHandler.DisposeTensors();
-                }
+                Debug.Log("Disposing of tensor");
+                analysisResultTensor.Dispose();
+                analysisResultTensor = null;
+                _inferenceHandler.DisposeTensors();
             }
 
         }
@@ -159,34 +156,24 @@ namespace YOLOQuestUnity.YOLO
             Profiler.BeginSample("Postprocessing");
             
             List<DetectedObject> objects = new();
-            float widthScale = Size / _inputTexture.width;
-            float heightScale = widthScale;
+            float widthScale = _inputTexture.width / (float)Size;
+            float heightScale = _inputTexture.height / (float)Size;
 
-            if (_model.name.Contains("yolov10"))
+            for (int i = 0; i < result.shape[2]; i++)
             {
-                for (int i = 0; i < result.shape[1]; i++)
-                {
-                    int cocoClass = (int)result[0, i, 5];
-                    objects.Add(new DetectedObject(result[0, i, 0] * widthScale, result[0, i, 2] * heightScale, result[0, i, 1] * widthScale, result[0, i, 3] * heightScale, cocoClass, classes[cocoClass], result[0, i, 4]));
-                }
-            }
-            else if (_model.name.Contains("yolo11"))
-            {
-                for (int i = 0; i < result.shape[2]; i++)
-                {
-                    float confidence = result[0, 5, i];
-                    if (confidence < 0.5f) continue;
-                    int cocoClass = (int)result[0 ,4, i];
-                    float centreX = result[0, 0, i];
-                    float centreY = result[0, 1, i];
-                    float width = result[0, 2, i];
-                    float height = result[0, 3, i];
+                float confidence = result[0, 5, i];
+                if (confidence < 0.5f) continue;
+                int cocoClass = (int)result[0 ,4, i];
+                float centreX = result[0, 0, i] * widthScale;
+                float centreY = result[0, 1, i] * heightScale;
+                float width = result[0, 2, i] * widthScale;
+                float height = result[0, 3, i] * heightScale;
 
-                    objects.Add(new DetectedObject(centreX - width / 2f, centreY - height / 2f, centreX + width / 2f, centreY + height / 2f, cocoClass, classes[cocoClass], confidence));
-                }
-
-                objects.Sort((x, y) => y.Confidence.CompareTo(x.Confidence));
+                objects.Add(new DetectedObject(centreX, centreY, width, height, cocoClass, classes[cocoClass], confidence));
             }
+
+            objects.Sort((x, y) => y.Confidence.CompareTo(x.Confidence));
+            
 
             Profiler.EndSample();
             
