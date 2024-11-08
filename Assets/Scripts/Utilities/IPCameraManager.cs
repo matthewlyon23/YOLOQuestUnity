@@ -26,12 +26,10 @@ namespace YOLOQuestUnity.Utilities
         {
             _webRequest = UnityWebRequestTexture.GetTexture(_imageUrl);
 
-            if (_imageUrl.StartsWith("https"))
-            {
-                var auth = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
-                _webRequest.SetRequestHeader("Authorization", auth);
-                _webRequest.certificateHandler = new ForceCertificate();
-            }
+            var auth = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
+            _webRequest.SetRequestHeader("Authorization", auth);
+            _webRequest.certificateHandler = new ForceCertificate();
+            
             
             yield return _webRequest.SendWebRequest();
 
