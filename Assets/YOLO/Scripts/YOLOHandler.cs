@@ -5,6 +5,7 @@ using Unity.Sentis;
 using UnityEngine;
 using YOLOQuestUnity.Inference;
 using YOLOQuestUnity.ObjectDetection;
+using YOLOQuestUnity.Utilities;
 
 namespace YOLOQuestUnity.YOLO
 {
@@ -15,6 +16,7 @@ namespace YOLOQuestUnity.YOLO
 
         [SerializeField] private int Size = 640;
         [SerializeField] private ModelAsset _model;
+        [SerializeField] private VideoFeedManager _YOLOCamera;
 
         #endregion
 
@@ -26,7 +28,7 @@ namespace YOLOQuestUnity.YOLO
         private bool inferencePending = false;
         Awaitable<Tensor<float>> analysisResult;
         Tensor<float> analysisResultTensor;
-        [SerializeField] private Texture2D _inputTexture;
+        private Texture2D _inputTexture;
 
         #endregion
 
@@ -77,30 +79,28 @@ namespace YOLOQuestUnity.YOLO
 
         void Update()
         {
-            //FrameCount++;
-
-            if (FrameCount != 0) return;
-
             if (_inferenceHandler == null) return;
 
+            if (_YOLOCamera == null) return;
 
             try
             {
                 if (analysisResult == null || !inferencePending)
                 {
                     Debug.Log("Getting texture");
-                    if (_inputTexture == null) return;
+                    if ((_inputTexture = _YOLOCamera.GetTexture()) == null) return;
                     Debug.Log("Got texture");
                     Debug.Log("Starting YOLO analysis");
                     analysisResult = _inferenceHandler.Run(_inputTexture);
                     Debug.Log("YOLO Analysis started");
                     inferencePending = true;
                 }
-                else if (inferencePending && analysisResult.GetAwaiter().IsCompleted)
+                if (inferencePending && analysisResult.GetAwaiter().IsCompleted)
                 {
                     Debug.Log("Got YOLO result");
                     analysisResultTensor = analysisResult.GetAwaiter().GetResult();
                     var detectedObjects = PostProcess(analysisResultTensor);
+                    analysisResultTensor.Dispose();
                     inferencePending = false;
                     Debug.Log("Collected YOLO results");
                     T1.text = $"{detectedObjects[0].CocoName} detected with confidence {detectedObjects[0].Confidence}";

@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Sentis;
+using System.Collections;
 
 namespace YOLOQuestUnity.ObjectDetection
 {
@@ -19,8 +20,8 @@ namespace YOLOQuestUnity.ObjectDetection
             Texture2D inputTexture = new(texture.width, texture.height, texture.format, false);
             Graphics.CopyTexture(texture, inputTexture);
 
-            _input = TextureConverter.ToTensor(inputTexture);
-            _input = _input.ReadbackAndClone();
+            TextureTransform textureTransform = new TextureTransform().SetChannelSwizzle().SetDimensions(-1, -1, 3);
+            _input = TextureConverter.ToTensor(inputTexture, textureTransform);
         
             _worker.Schedule(_input);
 
@@ -28,6 +29,21 @@ namespace YOLOQuestUnity.ObjectDetection
 
             var tensor = _worker.PeekOutput() as Tensor<float>;
             var output = tensor.ReadbackAndCloneAsync();
+            return output;
+        }
+
+        public IEnumerator AnalyseTextureWithLayerControl(Texture2D texture)
+        {
+            Texture2D inputTexture = new(texture.width, texture.height, texture.format, false);
+            Graphics.CopyTexture(texture, inputTexture);
+
+            TextureTransform textureTransform = new TextureTransform().SetChannelSwizzle().SetDimensions(-1, -1, 3);
+            _input = TextureConverter.ToTensor(inputTexture, textureTransform);
+
+            var output =_worker.ScheduleIterable(_input);
+
+            _input.Dispose();
+
             return output;
         }
 
