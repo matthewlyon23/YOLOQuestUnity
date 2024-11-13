@@ -2468,6 +2468,7 @@ MonoBehaviour:
   _model: {fileID: 5022602860645237092, guid: 9a58e46a0f5b74f49b56a0f019836020, type: 3}
   _YOLOCamera: {fileID: 913416983}
   _layersPerFrame: 10
+  _classJson: {fileID: 4900000, guid: cdb05da3b5395d7439c72325999baca2, type: 3}
   T1: {fileID: 757534624}
   T2: {fileID: 393463858}
   T3: {fileID: 707896071}
