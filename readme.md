@@ -16,24 +16,11 @@ A Unity 6000.0.20f1 project at root. Custom scripts and assets are in two folder
 
 ### Build steps
 
-To build the project, first [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) the repo using ssh:
-
-    git clone git@github.com:AdmiralCasio/YOLOQuestUnity.git
+To build the project, first [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) the repo.
 
 Open the project in the Unity Editor - this may take some time.
 
 Go to File/Build Profiles, make sure the target platform is set to Android, then click build.
-
-Alternatively, you can use the command line:
-
-### Test steps
-
-List steps needed to show your software works. This might be running a test suite, or just starting the program; but something that could be used to verify your code is working correctly.
-
-Examples:
-
-* Run automated tests by running `pytest`
-* Start the software by running `bin/editor.exe` and opening the file `examples/example_01.bin`
 
 ## Attribution
 
