@@ -33,9 +33,6 @@ namespace YOLOQuestUnity.YOLO.Display
 
             foreach (var obj in objects)
             {
-                if (ModelCount == MaxModelCount) break;
-
-
                 List<GameObject> modelList;
                 if (_activeModels.ContainsKey(obj.CocoClass)) modelList = _activeModels[obj.CocoClass];
                 else
@@ -49,7 +46,7 @@ namespace YOLOQuestUnity.YOLO.Display
                     objectCounts[obj.CocoClass]++;
                 }
 
-                if (objectCounts[obj.CocoClass] > modelList.Count)
+                if (objectCounts[obj.CocoClass] > modelList.Count && ModelCount != MaxModelCount)
                 {
                     if (_cocoModels.ContainsKey(obj.CocoName))
                     {
@@ -94,8 +91,8 @@ namespace YOLOQuestUnity.YOLO.Display
 
         private Vector3 ImageToWorldCoordinates(Vector2 coordinates)
         {
-            var point = _camera.ScreenToWorldPoint(new Vector3(coordinates.x, coordinates.y, 20f));
-            return point;
+
+            return Vector3.zero;
         }
 
     }
