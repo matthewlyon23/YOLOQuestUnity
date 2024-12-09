@@ -15,17 +15,11 @@ namespace YOLOQuestUnity.ObjectDetection
         }
 
         public Awaitable<Tensor<float>> AnalyseTexture(Texture2D texture)
-        {
-
-            Texture2D inputTexture = new(texture.width, texture.height, texture.format, false);
-            Graphics.CopyTexture(texture, inputTexture);
-
-            TextureTransform textureTransform = new TextureTransform().SetChannelSwizzle().SetDimensions(-1, -1, 3);
-            _input = TextureConverter.ToTensor(inputTexture, textureTransform);
+        { 
+            TextureTransform textureTransform = new TextureTransform().SetChannelSwizzle().SetDimensions(640, 640, 3);
+            _input = TextureConverter.ToTensor(texture, textureTransform);
         
             _worker.Schedule(_input);
-
-            _input.Dispose();
 
             var tensor = _worker.PeekOutput() as Tensor<float>;
             var output = tensor.ReadbackAndCloneAsync();
@@ -34,17 +28,17 @@ namespace YOLOQuestUnity.ObjectDetection
 
         public IEnumerator AnalyseTextureWithLayerControl(Texture2D texture)
         {
-            Texture2D inputTexture = new(texture.width, texture.height, texture.format, false);
-            Graphics.CopyTexture(texture, inputTexture);
-
-            TextureTransform textureTransform = new TextureTransform().SetChannelSwizzle().SetDimensions(-1, -1, 3);
-            _input = TextureConverter.ToTensor(inputTexture, textureTransform);
+            TextureTransform textureTransform = new TextureTransform().SetChannelSwizzle().SetDimensions(640, 640, 3);
+            _input = TextureConverter.ToTensor(texture, textureTransform);
 
             var output =_worker.ScheduleIterable(_input);
 
-            _input.Dispose();
-
             return output;
+        }
+
+        public void OnDestroy()
+        {
+            _input.Dispose();
         }
 
 
