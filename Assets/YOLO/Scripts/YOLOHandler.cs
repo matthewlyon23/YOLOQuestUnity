@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Sentis;
@@ -88,7 +88,9 @@ namespace YOLOQuestUnity.YOLO
                 if (!inferencePending)
                 {
                     if ((_inputTexture = _YOLOCamera.GetTexture()) == null) return;
+                    Debug.Log("Got texture");
                     splitInferenceEnumerator = _inferenceHandler.RunWithLayerControl(_inputTexture);
+                    Debug.Log("Inference started");
                     inferencePending = true;
                 }
                 if (inferencePending)
@@ -101,6 +103,7 @@ namespace YOLOQuestUnity.YOLO
                     var analysisResult = analysisResultTensor.ReadbackAndCloneAsync().GetAwaiter();
                     analysisResult.OnCompleted(() =>
                     {
+                        Debug.Log("Got result");
                         analysisResultTensor = analysisResult.GetResult();
                         readingBack = false;
 
