@@ -2976,7 +2976,9 @@ MonoBehaviour:
   _cocoModels:
     _serializedList:
     - Key: keyboard
-      Value: {fileID: 7889816493139587521, guid: ce3b78a28d464474e8de2f698240c266, type: 3}
+      Value: {fileID: 3750004252618185731, guid: a5fbb93e17152c1469498e50aa65f767, type: 3}
+    - Key: tv
+      Value: {fileID: 1802804698819089513, guid: fb6b6681063e73c4bbe4b0fa9b377189, type: 3}
     - Key: backpack
       Value: {fileID: 4580465909547546621, guid: 7855e730c3429394dba2d3673affda4e, type: 3}
     - Key: bench
@@ -2986,20 +2988,20 @@ MonoBehaviour:
     - Key: cat
       Value: {fileID: 919132149155446097, guid: 505d8a42f34df934c99c36124ddd1cbb, type: 3}
     - Key: bus
-      Value: {fileID: 919132149155446097, guid: 45e63f48a0332e8479fefb6472784914, type: 3}
+      Value: {fileID: 8817114689952182293, guid: 954f1fb72f3523e48bfe66832deea104, type: 3}
     - Key: dog
-      Value: {fileID: 919132149155446097, guid: db689ea845160a54ba93dce992acf2a1, type: 3}
+      Value: {fileID: 4652308615793174742, guid: 98735a70e422bdc48a49c67318e400c7, type: 3}
     - Key: laptop
-      Value: {fileID: 919132149155446097, guid: 4c10328a13c34e64f8cbc3c51a98e46d, type: 3}
-    - Key: tv
-      Value: {fileID: 919132149155446097, guid: db8ffb1bae371e84fb074266f03dcf87, type: 3}
+      Value: {fileID: 6435767200793775536, guid: eb1d0a7080b6cde4289637b401326a03, type: 3}
     - Key: traffic light
-      Value: {fileID: 919132149155446097, guid: ebed52a1d05c7a84a9be4900f0d3ea8d, type: 3}
+      Value: {fileID: 5024459837109285715, guid: 726804a5d90b22540a06fa4d6aa4a255, type: 3}
     - Key: motorcycle
       Value: {fileID: 919132149155446097, guid: 772a82d0f51fa084aa42aaa50e418b79, type: 3}
     - Key: umbrella
-      Value: {fileID: 919132149155446097, guid: 772a82d0f51fa084aa42aaa50e418b79, type: 3}
+      Value: {fileID: 919132149155446097, guid: 6a2300f147ae5734badb83315730b4e1, type: 3}
+  _videoFeedManager: {fileID: 913416983}
   _camera: {fileID: 1109407790274764220}
+  _movingObjects: 1
 --- !u!4 &2067556086
 Transform:
   m_ObjectHideFlags: 0
@@ -3009,7 +3011,7 @@ Transform:
   m_GameObject: {fileID: 2067556084}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 29.39857, y: 1496.3949, z: 100}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
