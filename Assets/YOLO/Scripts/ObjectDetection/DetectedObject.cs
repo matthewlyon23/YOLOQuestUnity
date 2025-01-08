@@ -14,7 +14,7 @@ namespace YOLOQuestUnity.ObjectDetection
             CocoClass = cocoClass;
             CocoName = cocoName;
             Confidence = confidence;
-            BoundingBox = new Rect((int)centreX, (int)centreY, (int)width, (int)height);
+            BoundingBox = new Rect((int)centreX-(width/2), (int)centreY-(height/2), (int)width, (int)height);
         }
 
         
