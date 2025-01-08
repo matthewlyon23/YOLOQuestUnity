@@ -2,6 +2,7 @@ using AYellowpaper.SerializedCollections;
 using System.Collections.Generic;
 using UnityEngine;
 using YOLOQuestUnity.ObjectDetection;
+using YOLOQuestUnity.Utilities;
 
 namespace YOLOQuestUnity.YOLO.Display
 {
@@ -16,9 +17,12 @@ namespace YOLOQuestUnity.YOLO.Display
         [SerializeField, SerializedDictionary("Coco Class", "3D Model")]
         private SerializedDictionary<string, GameObject> _cocoModels;
 
+        [SerializeField] private VideoFeedManager _videoFeedManager;
+
         [SerializeField] private Camera _camera;
 
-        public bool MovingObjects { get; set; }
+        [SerializeField] private bool _movingObjects;
+        public bool MovingObjects { get => _movingObjects; set => _movingObjects = value; }
 
         public int ModelCount { get { return _modelCount; } private set { _modelCount = value; } }
         public int MaxModelCount { get { return _maxModelCount; } private set { _maxModelCount = value; } }
@@ -34,7 +38,7 @@ namespace YOLOQuestUnity.YOLO.Display
 
             foreach (var obj in objects)
             {
-                    if (objectCounts.GetValueOrDefault(obj.CocoClass) == 2) continue;
+                if (objectCounts.GetValueOrDefault(obj.CocoClass) == 2) continue;
 
                 Dictionary<int, GameObject> modelList;
                 if (_activeModels.ContainsKey(obj.CocoClass)) modelList = _activeModels[obj.CocoClass];
@@ -51,7 +55,7 @@ namespace YOLOQuestUnity.YOLO.Display
 
                 if (objectCounts[obj.CocoClass] > modelList.Count && ModelCount != MaxModelCount)
                 {
-                    if (_cocoModels.ContainsKey(obj.CocoName))
+                    if (_cocoModels.ContainsKey(obj.CocoName) && _cocoModels[obj.CocoName] != null)
                     {
                         Debug.Log("Spawning new object");
                         var model = Instantiate(_cocoModels[obj.CocoName], ImageToWorldCoordinates(obj.BoundingBox.center), Quaternion.identity);
@@ -106,18 +110,20 @@ namespace YOLOQuestUnity.YOLO.Display
 
         private Vector3 ImageToWorldCoordinates(Vector2 coordinates)
         {
-            
-            var cameraWidthScale = _camera.scaledPixelWidth / 1024f;
-            var cameraHeightScale = _camera.scaledPixelHeight / 1024f;
 
-            Debug.Log($"Camera Width: {_camera.scaledPixelWidth} Scale: {cameraWidthScale}");
-            Debug.Log($"Camera Height: {_camera.scaledPixelHeight} Scale: {cameraHeightScale}");
+            var feedDimensions = _videoFeedManager.GetFeedDimensions();
+
+            var cameraWidthScale = _camera.pixelWidth / feedDimensions.Width;
+            var cameraHeightScale = _camera.pixelHeight / feedDimensions.Height;
 
             var newX = coordinates.x * cameraWidthScale;
-            var newY = _camera.scaledPixelHeight - coordinates.y * cameraHeightScale;
+            var newY = _camera.pixelHeight - coordinates.y * cameraHeightScale;
 
-            return _camera.ScreenToWorldPoint(new Vector3(newX, newY, 1.5f));
+            var newWorldPoint = _camera.ScreenToWorldPoint(new Vector3(newX, newY, 1.5f));
+            newWorldPoint.x -= 0.5f;
+            //newWorldPoint.y += 0.5f;
+
+            return newWorldPoint;
         }
-
     }
 }

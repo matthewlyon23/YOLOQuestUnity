@@ -18,7 +18,7 @@ namespace YOLOQuestUnity.YOLO
 
         #region Inputs
 
-        [Tooltip("The size the input image will be converted to before running the model.")]
+        [Tooltip("The size the input image will be converted to before running the model. Here for future use. Currently has no functionality.")]
         [SerializeField] private int Size = 640;
         [Tooltip("The YOLO model to run.")]
         [SerializeField] private ModelAsset _model;
@@ -67,6 +67,7 @@ namespace YOLOQuestUnity.YOLO
         }
 
         [SerializeField] Texture2D _tempTexture;
+        [SerializeField] RawImage _cameraDisplay;
 
         #endregion
 
@@ -82,6 +83,8 @@ namespace YOLOQuestUnity.YOLO
 
         void Update()
         {
+            if (_YOLOCamera.GetTexture() != null && _cameraDisplay != null) _cameraDisplay.texture = _YOLOCamera.GetTexture();
+            
             if (_inferenceHandler == null) return;
 
             if (_YOLOCamera == null) return;
@@ -116,12 +119,18 @@ namespace YOLOQuestUnity.YOLO
 
                         _displayManager.DisplayModels(detectedObjects);
 
-                        if (detectedObjects.Count > 2)
-                        {
-                            T1.text = $"{detectedObjects[0].CocoName} detected with confidence {detectedObjects[0].Confidence}";
-                            T2.text = $"{detectedObjects[1].CocoName} detected with confidence {detectedObjects[1].Confidence}";
-                            T3.text = $"{detectedObjects[2].CocoName} detected with confidence {detectedObjects[2].Confidence}";
-                        }
+                        //if (detectedObjects.Count > 2)
+                        //{
+                        //    T1.text = $"{detectedObjects[0].CocoName} detected with confidence {detectedObjects[0].Confidence}";
+                        //    T2.text = $"{detectedObjects[1].CocoName} detected with confidence {detectedObjects[1].Confidence}";
+                        //    T3.text = $"{detectedObjects[2].CocoName} detected with confidence {detectedObjects[2].Confidence}";
+                        //}
+
+                        //foreach (var detectedObject in detectedObjects)
+                        //{
+                        //    var boundingBox = detectedObject.BoundingBox;
+                        //    for (int i =0; i < boundingBox.)
+                        //} 
                     });
 
                 }
@@ -147,7 +156,7 @@ namespace YOLOQuestUnity.YOLO
             for (int i = 0; i < result.shape[2]; i++)
             {
                 float confidence = result[0, 5, i];
-                if (confidence < 0.5f) continue;
+                if (confidence < 0.7f) continue;
                 int cocoClass = (int)result[0, 4, i];
                 float centreX = result[0, 0, i] * widthScale;
                 float centreY = result[0, 1, i] * heightScale;
