@@ -28,6 +28,11 @@ namespace YOLOQuestUnity.Utilities
             NewFrame.Invoke();
         }
         private void OnScreenCaptureStart() => ScreenCaptureStart.Invoke();
+
+        public override FeedDimensions GetFeedDimensions()
+        {
+            return new FeedDimensions(1024, 1024);
+        }
     }
 }
 
