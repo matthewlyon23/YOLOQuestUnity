@@ -120,7 +120,7 @@ namespace YOLOQuestUnity.YOLO.Display
             var newY = _camera.pixelHeight - coordinates.y * cameraHeightScale;
 
             var newWorldPoint = _camera.ScreenToWorldPoint(new Vector3(newX, newY, 1.5f));
-            newWorldPoint.x -= 0.5f;
+            newWorldPoint.x -= 0.3f;
             //newWorldPoint.y += 0.5f;
 
             return newWorldPoint;
