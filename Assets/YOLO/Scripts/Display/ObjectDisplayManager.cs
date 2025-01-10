@@ -13,6 +13,7 @@ namespace YOLOQuestUnity.YOLO.Display
 
         private int _modelCount;
         [SerializeField] private int _maxModelCount;
+        [SerializeField] private float _distanceThreshold = 0.5f;
 
         [SerializeField, SerializedDictionary("Coco Class", "3D Model")]
         private SerializedDictionary<string, GameObject> _cocoModels;
@@ -26,6 +27,9 @@ namespace YOLOQuestUnity.YOLO.Display
 
         public int ModelCount { get { return _modelCount; } private set { _modelCount = value; } }
         public int MaxModelCount { get { return _maxModelCount; } private set { _maxModelCount = value; } }
+        public float DistanceThreshold { get { return _distanceThreshold; } private set { _distanceThreshold = value; } }
+
+        
 
         private void Start()
         {
@@ -40,6 +44,13 @@ namespace YOLOQuestUnity.YOLO.Display
             {
                 if (objectCounts.GetValueOrDefault(obj.CocoClass) == 2) continue;
 
+                if (!_cocoModels.ContainsKey(obj.CocoName) || _cocoModels[obj.CocoName] == null)
+                {
+                    Debug.Log("Error: No model provided for the detected class.");
+
+                    continue;
+                }
+
                 Dictionary<int, GameObject> modelList;
                 if (_activeModels.ContainsKey(obj.CocoClass)) modelList = _activeModels[obj.CocoClass];
                 else
@@ -47,6 +58,24 @@ namespace YOLOQuestUnity.YOLO.Display
                     modelList = new Dictionary<int, GameObject>();
                     _activeModels.Add(obj.CocoClass, modelList);
                 }
+                
+                var spawnPosition = ImageToWorldCoordinates(obj.BoundingBox.center);
+                
+                bool duplicate = false;
+                foreach (var (id, model) in modelList)
+                {
+                    // if "close enough" to new model, don't add
+                    // Euclidian distance?
+
+                    var distance = Vector3.Distance(spawnPosition, model.transform.position);
+                    if (distance < DistanceThreshold)
+                    {
+                        duplicate = true;
+                        break;
+                    }
+                }
+
+                if (duplicate) continue;
 
                 if (!objectCounts.TryAdd(obj.CocoClass, 1))
                 {
@@ -55,20 +84,13 @@ namespace YOLOQuestUnity.YOLO.Display
 
                 if (objectCounts[obj.CocoClass] > modelList.Count && ModelCount != MaxModelCount)
                 {
-                    if (_cocoModels.ContainsKey(obj.CocoName) && _cocoModels[obj.CocoName] != null)
-                    {
-                        Debug.Log("Spawning new object");
-                        var model = Instantiate(_cocoModels[obj.CocoName], ImageToWorldCoordinates(obj.BoundingBox.center), Quaternion.identity);
-                        model.transform.LookAt(_camera.transform);
-                        model.name = obj.CocoName;
-                        modelList.Add(objectCounts[obj.CocoClass], model);
+                    Debug.Log("Spawning new object");
+                    var model = Instantiate(_cocoModels[obj.CocoName], spawnPosition, Quaternion.identity);
+                    model.transform.LookAt(_camera.transform);
+                    model.name = obj.CocoName;
+                    modelList.Add(objectCounts[obj.CocoClass], model);
 
-                        ModelCount++;
-                    }
-                    else
-                    {
-                        Debug.Log("Error: No model provided for the detected class.");
-                    }
+                    ModelCount++;
                 }
                 else if (objectCounts[obj.CocoClass] <= modelList.Count)
                 {
@@ -76,7 +98,7 @@ namespace YOLOQuestUnity.YOLO.Display
                     {
                         Debug.Log("Using existing object");
                         var model = modelList[objectCounts[obj.CocoClass]];
-                        model.transform.SetPositionAndRotation(ImageToWorldCoordinates(obj.BoundingBox.center), Quaternion.identity);
+                        model.transform.SetPositionAndRotation(spawnPosition, Quaternion.identity);
                         model.transform.LookAt(_camera.transform);
                         model.name = obj.CocoName;
                         model.SetActive(true);

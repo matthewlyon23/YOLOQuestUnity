@@ -2973,6 +2973,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _maxModelCount: 20
+  _distanceThreshold: 0.5
   _cocoModels:
     _serializedList:
     - Key: keyboard
