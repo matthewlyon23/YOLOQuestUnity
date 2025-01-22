@@ -7,6 +7,7 @@ using Meta.XR.MRUtilityKit;
 using UnityEngine.EventSystems;
 using Meta.XR;
 using static Meta.XR.MRUtilityKit.FindSpawnPositions;
+using NUnit.Framework.Interfaces;
 
 namespace YOLOQuestUnity.YOLO.Display
 {
@@ -90,37 +91,12 @@ namespace YOLOQuestUnity.YOLO.Display
                 {
                     if (_cocoModels.ContainsKey(obj.CocoName) && _cocoModels[obj.CocoName] != null)
                     {
-                        Vector3 spawnPosition = Vector3.zero;
-                        Quaternion spawnRotation = Quaternion.identity;
-
-                        if (_environmentRaycastManager != null && _environmentRaycastManager.enabled)
-                        {
-                            Debug.Log("Using environment raycast manager");
-
-                            Ray ray = _camera.ScreenPointToRay(ImageToScreenCoordinates(obj.BoundingBox.center));
-                            if (_environmentRaycastManager.Raycast(ray, out EnvironmentRaycastHit hit))
-                            {
-                                Debug.Log($"Hit {hit.status}");
-                                spawnPosition = hit.point;
-                                spawnRotation = Quaternion.LookRotation(hit.normal);
-                                Debug.Log($"Depth: Spawning new object at point ({spawnPosition.x}, {spawnPosition.y}, {spawnPosition.z}) distance {(_camera.transform.position - spawnPosition).magnitude}");
-                                Debug.Log($"Depth: Previous method would have places at {ImageToWorldCoordinates(obj.BoundingBox.center)}");
-                            }
-                        }
-                        else
-                        {
-                            spawnPosition = ImageToWorldCoordinates(obj.BoundingBox.center);
-                        }
+                        (Vector3 spawnPosition, Quaternion spawnRotation, float hitConfidence) = GetObjectWorldCoordinates(obj);
 
                         Debug.Log("Spawning new object");
-                        var model = Instantiate(_cocoModels[obj.CocoName], spawnPosition, spawnRotation);
-                        if (_environmentRaycastManager == null)
-                        {
-                            model.transform.LookAt(_camera.transform);
-                        }
-                    model.name = $"{obj.CocoName} {objectCounts[obj.CocoClass]}";
+                        var model = Instantiate(_cocoModels[obj.CocoName]);
                         modelList.Add(objectCounts[obj.CocoClass], model);
-
+                        UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5);
                         ModelCount++;
                     }
                     else
@@ -132,12 +108,11 @@ namespace YOLOQuestUnity.YOLO.Display
                 {
                     if (MovingObjects)
                     {
+                        (Vector3 newPosition, Quaternion newRotation, float hitConfidence) = GetObjectWorldCoordinates(obj);
+
                         Debug.Log("Using existing object");
                         var model = modelList[objectCounts[obj.CocoClass]];
-                        model.transform.SetPositionAndRotation(ImageToWorldCoordinates(obj.BoundingBox.center), Quaternion.identity);
-                        model.transform.LookAt(_camera.transform);
-                        model.name = obj.CocoName;
-                        model.SetActive(true);
+                        UpdateModel(obj, objectCounts[obj.CocoClass], newPosition, newRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5);
                     }
                 }
             }
@@ -194,6 +169,28 @@ namespace YOLOQuestUnity.YOLO.Display
             return newWorldPoint;
         }
 
+        public (Vector2, Quaternion, float) GetObjectWorldCoordinates(DetectedObject obj)
+        {
+            Vector2 position = Vector2.zero;
+            Quaternion rotation = Quaternion.identity;
+            float hitConfidence = 0;
+
+            if (_environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled)
+            {
+                Ray ray = _camera.ScreenPointToRay(ImageToScreenCoordinates(obj.BoundingBox.center));
+                if (_environmentRaycastManager.Raycast(ray, out EnvironmentRaycastHit hit))
+                {
+                    Debug.Log($"Hit {hit.status}");
+                    position = hit.point;
+                    rotation = Quaternion.LookRotation(hit.normal);
+                    hitConfidence = hit.normalConfidence;
+                }
+            }
+            else position = ImageToWorldCoordinates(obj.BoundingBox.center);
+
+            return (position, rotation, hitConfidence);
+        }
+
         private Vector2 ImageToScreenCoordinates(Vector2 coordinates)
         {
             var feedDimensions = _videoFeedManager.GetFeedDimensions();
@@ -207,6 +204,14 @@ namespace YOLOQuestUnity.YOLO.Display
             //newX -= _camera.pixelWidth * 0.08f;
 
             return new Vector2(newX, newY);
+        }
+
+        private void UpdateModel(DetectedObject obj, int id, Vector2 newPosition, Quaternion newRotation, GameObject model, bool useRaycastNormal)
+        {
+            model.transform.SetPositionAndRotation(newPosition, newRotation);
+            if (!useRaycastNormal) model.transform.LookAt(_camera.transform);
+            model.name = $"{obj.CocoName} {id}";
+            model.SetActive(true);
         }
 
 
