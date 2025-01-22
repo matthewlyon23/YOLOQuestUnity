@@ -30,6 +30,10 @@ namespace YOLOQuestUnity.YOLO
         [SerializeField] private TextAsset _classJson;
         [Tooltip("The ObjectDisplayManager that will handle the spawning of digital double models.")]
         [SerializeField] private ObjectDisplayManager _displayManager;
+        [Tooltip("The base camera for scene analysis")]
+        [SerializeField] private Camera _referenceCamera;
+        
+        public Camera ReferenceCamera { get => _referenceCamera; set => _referenceCamera = value; }
 
         #endregion
 
@@ -44,6 +48,8 @@ namespace YOLOQuestUnity.YOLO
         private Tensor<float> analysisResultTensor;
         private Texture2D _inputTexture;
         private IEnumerator splitInferenceEnumerator;
+
+        private Camera _analysisCamera;
 
         #endregion
 
@@ -79,6 +85,7 @@ namespace YOLOQuestUnity.YOLO
             _inferenceHandler = new YOLOInferenceHandler(_model, 640);
             if (_layersPerFrame == 0) _layersPerFrame = 1;
             slider.onValueChanged.AddListener(SetLayersPerFrame);
+            _analysisCamera = GetComponent<Camera>();
         }
 
         void Update()
@@ -98,6 +105,8 @@ namespace YOLOQuestUnity.YOLO
                     if ((_inputTexture = _YOLOCamera.GetTexture()) == null) return;
                     splitInferenceEnumerator = _inferenceHandler.RunWithLayerControl(_inputTexture);
                     inferencePending = true;
+                    _analysisCamera.CopyFrom(ReferenceCamera);
+                    Debug.Log($"Analysis camera position: {_analysisCamera.transform.position}");
                 }
                 if (inferencePending)
                 {
@@ -117,7 +126,7 @@ namespace YOLOQuestUnity.YOLO
                         _inferenceHandler.DisposeTensors();
                         inferencePending = false;
 
-                        _displayManager.DisplayModels(detectedObjects);
+                        _displayManager.DisplayModels(detectedObjects, _analysisCamera);
 
                         //if (detectedObjects.Count > 2)
                         //{
@@ -135,8 +144,9 @@ namespace YOLOQuestUnity.YOLO
 
                 }
             }
-            catch
+            catch (Exception e)
             {
+                Debug.LogException(e);
                 Debug.Log("Disposing of tensor");
                 analysisResultTensor.Dispose();
                 analysisResultTensor = null;

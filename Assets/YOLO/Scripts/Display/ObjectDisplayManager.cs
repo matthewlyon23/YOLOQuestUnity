@@ -3,11 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
+using Meta.XR.MRUtilityKit;
+using UnityEngine.EventSystems;
+using Meta.XR;
+using static Meta.XR.MRUtilityKit.FindSpawnPositions;
 
 namespace YOLOQuestUnity.YOLO.Display
 {
     public class ObjectDisplayManager : MonoBehaviour
     {
+
+        #region Model Management
+
 
         private Dictionary<int, Dictionary<int, GameObject>> _activeModels;
 
@@ -17,23 +24,49 @@ namespace YOLOQuestUnity.YOLO.Display
         [SerializeField, SerializedDictionary("Coco Class", "3D Model")]
         private SerializedDictionary<string, GameObject> _cocoModels;
 
-        [SerializeField] private VideoFeedManager _videoFeedManager;
-
-        [SerializeField] private Camera _camera;
-
         [SerializeField] private bool _movingObjects;
         public bool MovingObjects { get => _movingObjects; set => _movingObjects = value; }
 
         public int ModelCount { get { return _modelCount; } private set { _modelCount = value; } }
         public int MaxModelCount { get { return _maxModelCount; } private set { _maxModelCount = value; } }
 
+        #endregion
+
+        #region External Data Management
+
+        [SerializeField] private VideoFeedManager _videoFeedManager;
+
+        private Camera _camera;
+
+        #endregion
+
+        #region Depth
+
+        public bool UseSceneModel { get; set; }
+        public bool UseEnvironmentDepth { get; set; }
+
+        [SerializeField] private MRUK _mruk;
+        public MRUK SceneManager { get => _mruk; set => _mruk = value; }
+        private MRUKRoom currentRoom = null;
+
+        private EnvironmentRaycastManager _environmentRaycastManager;
+
+        private bool _sceneLoaded = false;
+
+        #endregion
+
         private void Start()
         {
             _activeModels = new();
+            SceneManager.SceneLoadedEvent.AddListener(OnSceneLoad);
+            SceneManager.RoomUpdatedEvent.AddListener(OnSceneUpdated);
+            _environmentRaycastManager = GetComponent<EnvironmentRaycastManager>();
         }
 
-        public void DisplayModels(List<DetectedObject> objects)
+        public void DisplayModels(List<DetectedObject> objects, Camera referenceCamera)
         {
+            _camera = referenceCamera;
+
             Dictionary<int, int> objectCounts = new();
 
             foreach (var obj in objects)
@@ -57,10 +90,35 @@ namespace YOLOQuestUnity.YOLO.Display
                 {
                     if (_cocoModels.ContainsKey(obj.CocoName) && _cocoModels[obj.CocoName] != null)
                     {
+                        Vector3 spawnPosition = Vector3.zero;
+                        Quaternion spawnRotation = Quaternion.identity;
+
+                        if (_environmentRaycastManager != null && _environmentRaycastManager.enabled)
+                        {
+                            Debug.Log("Using environment raycast manager");
+
+                            Ray ray = _camera.ScreenPointToRay(ImageToScreenCoordinates(obj.BoundingBox.center));
+                            if (_environmentRaycastManager.Raycast(ray, out EnvironmentRaycastHit hit))
+                            {
+                                Debug.Log($"Hit {hit.status}");
+                                spawnPosition = hit.point;
+                                spawnRotation = Quaternion.LookRotation(hit.normal);
+                                Debug.Log($"Depth: Spawning new object at point ({spawnPosition.x}, {spawnPosition.y}, {spawnPosition.z}) distance {(_camera.transform.position - spawnPosition).magnitude}");
+                                Debug.Log($"Depth: Previous method would have places at {ImageToWorldCoordinates(obj.BoundingBox.center)}");
+                            }
+                        }
+                        else
+                        {
+                            spawnPosition = ImageToWorldCoordinates(obj.BoundingBox.center);
+                        }
+
                         Debug.Log("Spawning new object");
-                        var model = Instantiate(_cocoModels[obj.CocoName], ImageToWorldCoordinates(obj.BoundingBox.center), Quaternion.identity);
-                        model.transform.LookAt(_camera.transform);
-                        model.name = obj.CocoName;
+                        var model = Instantiate(_cocoModels[obj.CocoName], spawnPosition, spawnRotation);
+                        if (_environmentRaycastManager == null)
+                        {
+                            model.transform.LookAt(_camera.transform);
+                        }
+                    model.name = $"{obj.CocoName} {objectCounts[obj.CocoClass]}";
                         modelList.Add(objectCounts[obj.CocoClass], model);
 
                         ModelCount++;
@@ -111,6 +169,33 @@ namespace YOLOQuestUnity.YOLO.Display
         private Vector3 ImageToWorldCoordinates(Vector2 coordinates)
         {
 
+            var screenPoint = ImageToScreenCoordinates(coordinates);
+
+            var newX = screenPoint.x;
+            var newY = screenPoint.y;
+
+            var spawnDepth = 1.5f;
+            if (_sceneLoaded && currentRoom != null)
+            {
+                Debug.Log("Testing Depth");
+
+                Ray ray = _camera.ScreenPointToRay(new Vector2(newX, newY));
+                if (currentRoom.Raycast(ray, 500, out RaycastHit hit, out MRUKAnchor anchor))
+                {
+                    Debug.Log($"Hit {anchor.Label}");
+                    spawnDepth = hit.distance;
+                }
+            }
+
+            var newWorldPoint = _camera.ScreenToWorldPoint(new Vector3(newX, newY, spawnDepth));
+            //newWorldPoint.x -= 0.3f;
+            //newWorldPoint.y += 0.5f;
+
+            return newWorldPoint;
+        }
+
+        private Vector2 ImageToScreenCoordinates(Vector2 coordinates)
+        {
             var feedDimensions = _videoFeedManager.GetFeedDimensions();
 
             var cameraWidthScale = _camera.pixelWidth / feedDimensions.Width;
@@ -119,11 +204,21 @@ namespace YOLOQuestUnity.YOLO.Display
             var newX = coordinates.x * cameraWidthScale;
             var newY = _camera.pixelHeight - coordinates.y * cameraHeightScale;
 
-            var newWorldPoint = _camera.ScreenToWorldPoint(new Vector3(newX, newY, 1.5f));
-            newWorldPoint.x -= 0.3f;
-            //newWorldPoint.y += 0.5f;
+            //newX -= _camera.pixelWidth * 0.08f;
 
-            return newWorldPoint;
+            return new Vector2(newX, newY);
+        }
+
+
+        private void OnSceneLoad()
+        {
+            _sceneLoaded = true;
+            currentRoom = SceneManager.GetCurrentRoom();
+        }
+
+        private void OnSceneUpdated(MRUKRoom room)
+        {
+            currentRoom = room;
         }
     }
 }

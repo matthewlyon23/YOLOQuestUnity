@@ -4,7 +4,8 @@
     "references": [
         "YOLOObjectDetection",
         "AYellowpaper.SerializedCollections",
-        "YOLOQuestUnityUtilities"
+        "YOLOQuestUnityUtilities",
+        "meta.xr.mrutilitykit"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
