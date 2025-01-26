@@ -1,0 +1,24 @@
+{
+    "name": "YOLOObjectDetection",
+    "rootNamespace": "",
+    "references": [
+        "GUID:c98377141161c7746a178fb5cb1af075",
+        "GUID:baf600a77e4c04e4892ea6fddd7fc131",
+        "GUID:9f1e7d835703842dda0e25142ed6c3c9",
+        "GUID:6641b37355ccc4fda9ca4962c97755fe",
+        "GUID:b0963d20081ecf4459b3f9bcf5aeeb10",
+        "GUID:a754c20cf212b24479765642794bcb35",
+        "GUID:76dcb86eb66631f44abdfb18a7f2e2a1",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:c9eae2293317d46498425648d4eea124"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

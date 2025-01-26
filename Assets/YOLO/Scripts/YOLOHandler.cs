@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -8,6 +9,7 @@ using UnityEngine.UI;
 using YOLOQuestUnity.Inference;
 using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
+using YOLOQuestUnity.YOLO.Display;
 
 namespace YOLOQuestUnity.YOLO
 {
@@ -16,7 +18,7 @@ namespace YOLOQuestUnity.YOLO
 
         #region Inputs
 
-        [Tooltip("The size the input image will be converted to before running the model.")]
+        [Tooltip("The size the input image will be converted to before running the model. Here for future use. Currently has no functionality.")]
         [SerializeField] private int Size = 640;
         [Tooltip("The YOLO model to run.")]
         [SerializeField] private ModelAsset _model;
@@ -26,6 +28,8 @@ namespace YOLOQuestUnity.YOLO
         [SerializeField] private uint _layersPerFrame = 10;
         [Tooltip("A JSON containing a mapping of class numbers to class names")]
         [SerializeField] private TextAsset _classJson;
+        [Tooltip("The ObjectDisplayManager that will handle the spawning of digital double models.")]
+        [SerializeField] private ObjectDisplayManager _displayManager;
 
         #endregion
 
@@ -33,6 +37,7 @@ namespace YOLOQuestUnity.YOLO
 
         private InferenceHandler<Texture2D> _inferenceHandler;
         private int _frameCount;
+
         private int FrameCount { get => _frameCount; set => _frameCount = value % 30; }
         private bool inferencePending = false;
         private bool readingBack = false;
@@ -62,6 +67,7 @@ namespace YOLOQuestUnity.YOLO
         }
 
         [SerializeField] Texture2D _tempTexture;
+        [SerializeField] RawImage _cameraDisplay;
 
         #endregion
 
@@ -77,6 +83,8 @@ namespace YOLOQuestUnity.YOLO
 
         void Update()
         {
+            if (_YOLOCamera.GetTexture() != null && _cameraDisplay != null) _cameraDisplay.texture = _YOLOCamera.GetTexture();
+            
             if (_inferenceHandler == null) return;
 
             if (_YOLOCamera == null) return;
@@ -88,9 +96,7 @@ namespace YOLOQuestUnity.YOLO
                 if (!inferencePending)
                 {
                     if ((_inputTexture = _YOLOCamera.GetTexture()) == null) return;
-                    Debug.Log("Got texture");
                     splitInferenceEnumerator = _inferenceHandler.RunWithLayerControl(_inputTexture);
-                    Debug.Log("Inference started");
                     inferencePending = true;
                 }
                 if (inferencePending)
@@ -103,7 +109,6 @@ namespace YOLOQuestUnity.YOLO
                     var analysisResult = analysisResultTensor.ReadbackAndCloneAsync().GetAwaiter();
                     analysisResult.OnCompleted(() =>
                     {
-                        Debug.Log("Got result");
                         analysisResultTensor = analysisResult.GetResult();
                         readingBack = false;
 
@@ -112,12 +117,20 @@ namespace YOLOQuestUnity.YOLO
                         _inferenceHandler.DisposeTensors();
                         inferencePending = false;
 
-                        if (detectedObjects.Count > 2)
-                        {
-                            T1.text = $"{detectedObjects[0].CocoName} detected with confidence {detectedObjects[0].Confidence} at x:{detectedObjects[0].BoundingBox.x} y:{detectedObjects[0].BoundingBox.y}, {detectedObjects[0].BoundingBox.width} {detectedObjects[0].BoundingBox.height}";
-                            T2.text = $"{detectedObjects[1].CocoName} detected with confidence {detectedObjects[1].Confidence} at x:{detectedObjects[1].BoundingBox.x} y:{detectedObjects[1].BoundingBox.y}, {detectedObjects[1].BoundingBox.width} {detectedObjects[1].BoundingBox.height}";
-                            T3.text = $"{detectedObjects[2].CocoName} detected with confidence {detectedObjects[2].Confidence} at x:{detectedObjects[2].BoundingBox.x} y:{detectedObjects[2].BoundingBox.y}, {detectedObjects[2].BoundingBox.width} {detectedObjects[2].BoundingBox.height}";
-                        }
+                        _displayManager.DisplayModels(detectedObjects);
+
+                        //if (detectedObjects.Count > 2)
+                        //{
+                        //    T1.text = $"{detectedObjects[0].CocoName} detected with confidence {detectedObjects[0].Confidence}";
+                        //    T2.text = $"{detectedObjects[1].CocoName} detected with confidence {detectedObjects[1].Confidence}";
+                        //    T3.text = $"{detectedObjects[2].CocoName} detected with confidence {detectedObjects[2].Confidence}";
+                        //}
+
+                        //foreach (var detectedObject in detectedObjects)
+                        //{
+                        //    var boundingBox = detectedObject.BoundingBox;
+                        //    for (int i =0; i < boundingBox.)
+                        //} 
                     });
 
                 }
@@ -143,7 +156,7 @@ namespace YOLOQuestUnity.YOLO
             for (int i = 0; i < result.shape[2]; i++)
             {
                 float confidence = result[0, 5, i];
-                if (confidence < 0.5f) continue;
+                if (confidence < 0.7f) continue;
                 int cocoClass = (int)result[0, 4, i];
                 float centreX = result[0, 0, i] * widthScale;
                 float centreY = result[0, 1, i] * heightScale;

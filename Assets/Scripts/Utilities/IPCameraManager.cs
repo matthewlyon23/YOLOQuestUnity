@@ -17,9 +17,16 @@ namespace YOLOQuestUnity.Utilities
         private UnityWebRequest _webRequest;
         private Texture2D _currentTexture;
 
+
+        private bool _gettingFrame = false;
+
         private void Update()
         {
-            if (_webRequest == null) StartCoroutine(GetLatestImageFrame());
+            if (!_gettingFrame)
+            {
+                _gettingFrame = true;
+                StartCoroutine(GetLatestImageFrame());
+            }
         }
 
         private IEnumerator GetLatestImageFrame()
@@ -29,17 +36,16 @@ namespace YOLOQuestUnity.Utilities
             var auth = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
             _webRequest.SetRequestHeader("Authorization", auth);
             _webRequest.certificateHandler = new ForceCertificate();
-            
-            
+
+
             yield return _webRequest.SendWebRequest();
 
             try
             {
                 if (_webRequest.result != UnityWebRequest.Result.Success) throw new Exception("Web request failed");
                 if (!_webRequest.GetResponseHeaders()["Content-Type"].StartsWith("image/")) throw new IPCameraException("Invalid URL: The resource is not an image");
-                _currentTexture = DownloadHandlerTexture.GetContent(_webRequest);
-                
-                _webRequest = null;
+                var tempTexture = DownloadHandlerTexture.GetContent(_webRequest);
+                _currentTexture = ImageRotator.RotateImage(tempTexture, 90);
             }
             catch (Exception e)
             {
@@ -49,12 +55,18 @@ namespace YOLOQuestUnity.Utilities
             finally
             {
                 _webRequest = null;
+                _gettingFrame = false;
             }
         }
 
         public override Texture2D GetTexture()
         {
             return _currentTexture;
+        }
+
+        public override FeedDimensions GetFeedDimensions()
+        {
+            return _currentTexture == null ? new FeedDimensions(1024, 1024) : new FeedDimensions(_currentTexture.width, _currentTexture.height);
         }
     }
 
