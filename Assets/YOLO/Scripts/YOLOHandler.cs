@@ -18,8 +18,6 @@ namespace YOLOQuestUnity.YOLO
 
         #region Inputs
 
-        [Tooltip("The size the input image will be converted to before running the model. Here for future use. Currently has no functionality.")]
-        [SerializeField] private int Size = 640;
         [Tooltip("The YOLO model to run.")]
         [SerializeField] private ModelAsset _model;
         [Tooltip("The VideoFeedManager to analyse frames from.")]
@@ -35,6 +33,7 @@ namespace YOLOQuestUnity.YOLO
 
         #region InstanceFields
 
+        private int Size = 640;
         private InferenceHandler<Texture2D> _inferenceHandler;
         private int _frameCount;
 
@@ -76,7 +75,7 @@ namespace YOLOQuestUnity.YOLO
         {
             var classJsonString = _classJson.text;
             _classes = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<int, string>>>(classJsonString)["class"];
-            _inferenceHandler = new YOLOInferenceHandler(_model, 640);
+            _inferenceHandler = new YOLOInferenceHandler(_model, out Size);
             if (_layersPerFrame == 0) _layersPerFrame = 1;
             slider.onValueChanged.AddListener(SetLayersPerFrame);
         }

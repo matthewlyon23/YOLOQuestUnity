@@ -12,11 +12,13 @@ namespace YOLOQuestUnity.ObjectDetection
         private TextureAnalyser _textureAnalyser;
         private int _size;
 
-        public YOLOInferenceHandler(ModelAsset modelAsset, int size)
+        public YOLOInferenceHandler(ModelAsset modelAsset, out int size)
         {
-            _size = size;
             _model = ModelLoader.Load(modelAsset);
-            
+
+            size = _model.inputs[0].shape.Get(2);
+            _size = size;
+
             if (modelAsset.name.Contains("yolo11"))
             {
                 var graph = new FunctionalGraph();
@@ -45,7 +47,7 @@ namespace YOLOQuestUnity.ObjectDetection
 
             //ResizeTool.Resize(input, _size, _size, false, input.filterMode);
 
-            return _textureAnalyser.AnalyseTexture(input);
+            return _textureAnalyser.AnalyseTexture(input, _size);
         }
 
         public override IEnumerator RunWithLayerControl(Texture2D input)
@@ -55,7 +57,7 @@ namespace YOLOQuestUnity.ObjectDetection
 
             //ResizeTool.Resize(input, _size, _size, false, input.filterMode);
 
-            return _textureAnalyser.AnalyseTextureWithLayerControl(input);
+            return _textureAnalyser.AnalyseTextureWithLayerControl(input, _size);
         }
 
         public override void DisposeTensors()
