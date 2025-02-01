@@ -1,6 +1,7 @@
 using AYellowpaper.SerializedCollections;
 using Meta.XR;
 using Meta.XR.MRUtilityKit;
+using NUnit.Framework.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,7 @@ namespace YOLOQuestUnity.YOLO.Display
 
         private int _modelCount;
         [SerializeField] private int _maxModelCount;
+        [SerializeField] private float _distanceThreshold = 0.5f;
 
         [SerializeField, SerializedDictionary("Coco Class", "3D Model")]
         private SerializedDictionary<string, GameObject> _cocoModels;
@@ -28,6 +30,7 @@ namespace YOLOQuestUnity.YOLO.Display
 
         public int ModelCount { get { return _modelCount; } private set { _modelCount = value; } }
         public int MaxModelCount { get { return _maxModelCount; } private set { _maxModelCount = value; } }
+        public float DistanceThreshold { get { return _distanceThreshold; } private set { _distanceThreshold = value; } }
 
         [SerializeField] private ScaleType _scaleType = ScaleType.AVERAGE;
 
@@ -73,6 +76,13 @@ namespace YOLOQuestUnity.YOLO.Display
             {
                 if (objectCounts.GetValueOrDefault(obj.CocoClass) == 2) continue;
 
+                if (!_cocoModels.ContainsKey(obj.CocoName) || _cocoModels[obj.CocoName] == null)
+                {
+                    Debug.Log("Error: No model provided for the detected class.");
+
+                    continue;
+                }
+
                 Dictionary<int, GameObject> modelList;
                 if (_activeModels.ContainsKey(obj.CocoClass)) modelList = _activeModels[obj.CocoClass];
                 else
@@ -80,6 +90,10 @@ namespace YOLOQuestUnity.YOLO.Display
                     modelList = new Dictionary<int, GameObject>();
                     _activeModels.Add(obj.CocoClass, modelList);
                 }
+
+                (Vector3 spawnPosition, Quaternion spawnRotation, float hitConfidence) = GetObjectWorldCoordinates(obj);
+
+                if (IsDuplicate(spawnPosition, modelList)) continue;
 
                 if (!objectCounts.TryAdd(obj.CocoClass, 1))
                 {
@@ -90,7 +104,6 @@ namespace YOLOQuestUnity.YOLO.Display
                 {
                     if (_cocoModels.ContainsKey(obj.CocoName) && _cocoModels[obj.CocoName] != null)
                     {
-                        (Vector3 spawnPosition, Quaternion spawnRotation, float hitConfidence) = GetObjectWorldCoordinates(obj);
 
                         Debug.Log("Spawning new object");
                         var model = Instantiate(_cocoModels[obj.CocoName]);
@@ -108,11 +121,9 @@ namespace YOLOQuestUnity.YOLO.Display
                 {
                     if (MovingObjects)
                     {
-                        (Vector3 newPosition, Quaternion newRotation, float hitConfidence) = GetObjectWorldCoordinates(obj);
-
                         Debug.Log("Using existing object");
                         var model = modelList[objectCounts[obj.CocoClass]];
-                        UpdateModel(obj, objectCounts[obj.CocoClass], newPosition, newRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.2f);
+                        UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.2f);
                     }
                 }
             }
@@ -141,6 +152,22 @@ namespace YOLOQuestUnity.YOLO.Display
             //}
         }
 
+        private bool IsDuplicate(Vector3 spawnPosition, Dictionary<int, GameObject> modelList)
+        {
+            foreach (var (id, model) in modelList)
+            {
+                // if "close enough" to new model, don't add
+                // Euclidian distance?
+
+                var distance = Vector3.Distance(spawnPosition, model.transform.position);
+                if (distance < DistanceThreshold)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
         private Vector3 ImageToWorldCoordinates(Vector2 coordinates)
         {
 
