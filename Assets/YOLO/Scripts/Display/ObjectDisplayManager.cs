@@ -1,13 +1,12 @@
 using AYellowpaper.SerializedCollections;
+using Meta.XR;
+using Meta.XR.MRUtilityKit;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
-using Meta.XR.MRUtilityKit;
-using UnityEngine.EventSystems;
-using Meta.XR;
-using static Meta.XR.MRUtilityKit.FindSpawnPositions;
-using NUnit.Framework.Interfaces;
 
 namespace YOLOQuestUnity.YOLO.Display
 {
@@ -15,7 +14,6 @@ namespace YOLOQuestUnity.YOLO.Display
     {
 
         #region Model Management
-
 
         private Dictionary<int, Dictionary<int, GameObject>> _activeModels;
 
@@ -31,6 +29,9 @@ namespace YOLOQuestUnity.YOLO.Display
         public int ModelCount { get { return _modelCount; } private set { _modelCount = value; } }
         public int MaxModelCount { get { return _maxModelCount; } private set { _maxModelCount = value; } }
 
+        [SerializeField] private ScaleType _scaleType = ScaleType.AVERAGE;
+
+
         #endregion
 
         #region External Data Management
@@ -43,11 +44,8 @@ namespace YOLOQuestUnity.YOLO.Display
 
         #region Depth
 
-        public bool UseSceneModel { get; set; }
-        public bool UseEnvironmentDepth { get; set; }
-
-        [SerializeField] private MRUK _mruk;
-        public MRUK SceneManager { get => _mruk; set => _mruk = value; }
+        private MRUK _mruk;
+        private MRUK SceneManager { get => _mruk; set => _mruk = value; }
         private MRUKRoom currentRoom = null;
 
         private EnvironmentRaycastManager _environmentRaycastManager;
@@ -59,6 +57,7 @@ namespace YOLOQuestUnity.YOLO.Display
         private void Start()
         {
             _activeModels = new();
+            SceneManager = FindAnyObjectByType<MRUK>();
             SceneManager.SceneLoadedEvent.AddListener(OnSceneLoad);
             SceneManager.RoomUpdatedEvent.AddListener(OnSceneUpdated);
             _environmentRaycastManager = GetComponent<EnvironmentRaycastManager>();
@@ -96,7 +95,8 @@ namespace YOLOQuestUnity.YOLO.Display
                         Debug.Log("Spawning new object");
                         var model = Instantiate(_cocoModels[obj.CocoName]);
                         modelList.Add(objectCounts[obj.CocoClass], model);
-                        UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5);
+                        Debug.Log($"Hit Confidence: {hitConfidence}");
+                        UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.2f);
                         ModelCount++;
                     }
                     else
@@ -112,7 +112,7 @@ namespace YOLOQuestUnity.YOLO.Display
 
                         Debug.Log("Using existing object");
                         var model = modelList[objectCounts[obj.CocoClass]];
-                        UpdateModel(obj, objectCounts[obj.CocoClass], newPosition, newRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5);
+                        UpdateModel(obj, objectCounts[obj.CocoClass], newPosition, newRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.2f);
                     }
                 }
             }
@@ -178,7 +178,6 @@ namespace YOLOQuestUnity.YOLO.Display
                 Ray ray = _camera.ScreenPointToRay(ImageToScreenCoordinates(obj.BoundingBox.center));
                 if (_environmentRaycastManager.Raycast(ray, out EnvironmentRaycastHit hit))
                 {
-                    Debug.Log($"Hit {hit.status}");
                     position = hit.point;
                     rotation = Quaternion.LookRotation(hit.normal);
                     hitConfidence = hit.normalConfidence;
@@ -206,13 +205,73 @@ namespace YOLOQuestUnity.YOLO.Display
             return new Vector2(newX, newY);
         }
 
-        private void UpdateModel(DetectedObject obj, int id, Vector2 newPosition, Quaternion newRotation, GameObject model, bool useRaycastNormal)
+        private void RescaleObject(DetectedObject obj, GameObject model)
+        {
+            Vector3 p3 = obj.BoundingBox.max;
+            Vector3 p1 = obj.BoundingBox.min;
+
+            Vector3 sP3 = ImageToScreenCoordinates(p3);
+            Vector3 sP1 = ImageToScreenCoordinates(p1);
+
+            var newHeight = Math.Abs(sP3.y - sP1.y);
+            var newWidth = Math.Abs(sP3.x - sP1.x);
+
+            Vector3[] boundPoints = new Vector3[8];
+
+            boundPoints[0] = model.GetComponentInChildren<MeshRenderer>().bounds.min;
+            boundPoints[1] = model.GetComponentInChildren<MeshRenderer>().bounds.max;
+            boundPoints[2] = new Vector3(boundPoints[0].x, boundPoints[0].y, boundPoints[1].z);
+            boundPoints[3] = new Vector3(boundPoints[0].x, boundPoints[1].y, boundPoints[0].z);
+            boundPoints[4] = new Vector3(boundPoints[1].x, boundPoints[0].y, boundPoints[0].z);
+            boundPoints[5] = new Vector3(boundPoints[0].x, boundPoints[1].y, boundPoints[1].z);
+            boundPoints[6] = new Vector3(boundPoints[1].x, boundPoints[0].y, boundPoints[1].z);
+            boundPoints[7] = new Vector3(boundPoints[1].x, boundPoints[1].y, boundPoints[0].z);
+
+            Debug.Log("Max Current: " + boundPoints[1]);
+            Debug.Log("Min Current: " + boundPoints[0]);
+
+            Vector2[] screenPoints = boundPoints.Select(boundPoint => (Vector2)_camera.WorldToScreenPoint(boundPoint)).ToArray();
+
+            Vector2 maxPoint = screenPoints[0];
+            Vector2 minPoint = screenPoints[0];
+
+            foreach (Vector3 screenPoint in screenPoints)
+            {
+                if (screenPoint.x >= maxPoint.x && screenPoint.y >= maxPoint.y) maxPoint = screenPoint;
+                if (screenPoint.x <= minPoint.x && screenPoint.y <= minPoint.y) minPoint = screenPoint;
+            }
+
+            var currentWidth = Math.Abs(maxPoint.x - minPoint.x);
+            var currentHeight = Math.Abs(maxPoint.y - minPoint.y);
+            var scaleFactor = _scaleType switch
+            {
+                ScaleType.WIDTH => newWidth / currentWidth,
+                ScaleType.HEIGHT => newHeight / currentHeight,
+                ScaleType.AVERAGE => ((newWidth / currentWidth) + (newHeight / currentHeight)) / 2,
+                ScaleType.MIN => Math.Min(newWidth / currentWidth, newHeight / currentHeight),
+                ScaleType.MAX => Math.Max(newWidth / currentWidth, newHeight / currentHeight),
+                _ => 1f,
+            };
+            
+            Debug.Log($"Scaling {model.name} by {scaleFactor}");
+            Vector3 scaleVector = new Vector3(scaleFactor, scaleFactor, scaleFactor);
+            
+            Debug.Log("Old Scale: " + model.transform.localScale);
+            Vector3 oldScale = model.transform.localScale;
+            oldScale.Scale(scaleVector);
+            
+            model.transform.localScale = oldScale;
+            Debug.Log("New Scale: " + model.transform.localScale);
+        }
+
+        private void UpdateModel(DetectedObject obj, int id, Vector3 newPosition, Quaternion newRotation, GameObject model, bool useRaycastNormal)
         {
             model.transform.SetPositionAndRotation(newPosition, newRotation);
 
             if (!useRaycastNormal) model.transform.LookAt(_camera.transform);
 
             model.name = $"{obj.CocoName} {id}";
+            RescaleObject(obj, model);
             model.SetActive(true);
         }
 
@@ -226,6 +285,15 @@ namespace YOLOQuestUnity.YOLO.Display
         private void OnSceneUpdated(MRUKRoom room)
         {
             currentRoom = room;
+        }
+
+        private enum ScaleType
+        {
+            WIDTH,
+            HEIGHT,
+            AVERAGE,
+            MIN,
+            MAX
         }
     }
 }
