@@ -144,7 +144,7 @@ namespace YOLOQuestUnity.YOLO.Display
         private Vector3 ImageToWorldCoordinates(Vector2 coordinates)
         {
 
-            var screenPoint = ImageToScreenCoordinates(coordinates);
+            Vector3 screenPoint = ImageToScreenCoordinates(coordinates);
 
             var newX = screenPoint.x;
             var newY = screenPoint.y;
@@ -162,20 +162,18 @@ namespace YOLOQuestUnity.YOLO.Display
                 }
             }
 
-            var newWorldPoint = _camera.ScreenToWorldPoint(new Vector3(newX, newY, spawnDepth));
-            //newWorldPoint.x -= 0.3f;
-            //newWorldPoint.y += 0.5f;
+            Vector3 newWorldPoint = _camera.ScreenToWorldPoint(new Vector3(newX, newY, spawnDepth));
 
             return newWorldPoint;
         }
 
-        public (Vector2, Quaternion, float) GetObjectWorldCoordinates(DetectedObject obj)
+        public (Vector3, Quaternion, float) GetObjectWorldCoordinates(DetectedObject obj)
         {
-            Vector2 position = Vector2.zero;
+            Vector3 position = Vector3.zero;
             Quaternion rotation = Quaternion.identity;
             float hitConfidence = 0;
 
-            if (_environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled)
+            if (_environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
             {
                 Ray ray = _camera.ScreenPointToRay(ImageToScreenCoordinates(obj.BoundingBox.center));
                 if (_environmentRaycastManager.Raycast(ray, out EnvironmentRaycastHit hit))
@@ -185,6 +183,8 @@ namespace YOLOQuestUnity.YOLO.Display
                     rotation = Quaternion.LookRotation(hit.normal);
                     hitConfidence = hit.normalConfidence;
                 }
+
+                Debug.Log($"Hit {hit.status}");
             }
             else position = ImageToWorldCoordinates(obj.BoundingBox.center);
 
@@ -209,7 +209,9 @@ namespace YOLOQuestUnity.YOLO.Display
         private void UpdateModel(DetectedObject obj, int id, Vector2 newPosition, Quaternion newRotation, GameObject model, bool useRaycastNormal)
         {
             model.transform.SetPositionAndRotation(newPosition, newRotation);
+
             if (!useRaycastNormal) model.transform.LookAt(_camera.transform);
+
             model.name = $"{obj.CocoName} {id}";
             model.SetActive(true);
         }
