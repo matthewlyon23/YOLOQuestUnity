@@ -13,7 +13,7 @@
     <meta-data android:name="com.samsung.android.vr.application.mode" android:value="vr_only" />
     <meta-data android:name="com.oculus.ossplash.background" android:value="passthrough-contextual" />
     <meta-data android:name="com.oculus.telemetry.project_guid" android:value="338f972b-e2af-4bf4-83e6-18875df86d56" />
-    <meta-data android:name="com.oculus.supportedDevices" android:value="quest2|questpro|quest3" tools:replace="android:value" />
+    <meta-data android:name="com.oculus.supportedDevices" android:value="quest3" tools:replace="android:value" />
     <service android:name="com.trev3d.RecordNotificationService" android:foregroundServiceType="mediaProjection" android:exported="false"></service>
     <meta-data android:name="com.oculus.handtracking.frequency" android:value="LOW" />
   </application>
