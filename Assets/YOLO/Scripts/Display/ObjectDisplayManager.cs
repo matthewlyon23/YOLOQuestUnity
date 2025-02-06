@@ -173,10 +173,10 @@ namespace YOLOQuestUnity.YOLO.Display
 
             Vector3 screenPoint = ImageToScreenCoordinates(coordinates);
 
-            var newX = screenPoint.x;
-            var newY = screenPoint.y;
+            float newX = screenPoint.x;
+            float newY = screenPoint.y;
 
-            var spawnDepth = 1.5f;
+            float spawnDepth = 1.5f;
             if (_sceneLoaded && currentRoom != null)
             {
                 Debug.Log("Testing Depth");
@@ -219,30 +219,49 @@ namespace YOLOQuestUnity.YOLO.Display
 
         private Vector2 ImageToScreenCoordinates(Vector2 coordinates)
         {
-            var feedDimensions = _videoFeedManager.GetFeedDimensions();
+            FeedDimensions feedDimensions = _videoFeedManager.GetFeedDimensions();
 
-            var cameraWidthScale = _camera.pixelWidth / feedDimensions.Width;
-            var cameraHeightScale = _camera.pixelHeight / feedDimensions.Height;
+            float cameraWidthScale = _camera.pixelWidth / feedDimensions.Width;
+            float cameraHeightScale = _camera.pixelHeight / feedDimensions.Height;
 
-            var newX = coordinates.x * cameraWidthScale;
-            var newY = _camera.pixelHeight - coordinates.y * cameraHeightScale;
-
-            //newX -= _camera.pixelWidth * 0.08f;
+            float newX = coordinates.x * cameraWidthScale;
+            float newY = _camera.pixelHeight - coordinates.y * cameraHeightScale;
 
             return new Vector2(newX, newY);
         }
 
         private void RescaleObject(DetectedObject obj, GameObject model)
         {
+            
             Vector3 p3 = obj.BoundingBox.max;
             Vector3 p1 = obj.BoundingBox.min;
 
             Vector3 sP3 = ImageToScreenCoordinates(p3);
             Vector3 sP1 = ImageToScreenCoordinates(p1);
 
-            var newHeight = Math.Abs(sP3.y - sP1.y);
-            var newWidth = Math.Abs(sP3.x - sP1.x);
+            float newHeight = Math.Abs(sP3.y - sP1.y);
+            float newWidth = Math.Abs(sP3.x - sP1.x);
 
+            (Vector2 minPoint, Vector2 maxPoint) = GetModel2DBounds(GetModel3DBounds(model));
+
+            float currentWidth = Math.Abs(maxPoint.x - minPoint.x);
+            float currentHeight = Math.Abs(maxPoint.y - minPoint.y);
+            float scaleFactor = _scaleType switch
+            {
+                ScaleType.WIDTH => newWidth / currentWidth,
+                ScaleType.HEIGHT => newHeight / currentHeight,
+                ScaleType.AVERAGE => ((newWidth / currentWidth) + (newHeight / currentHeight)) / 2,
+                ScaleType.MIN => Math.Min(newWidth / currentWidth, newHeight / currentHeight),
+                ScaleType.MAX => Math.Max(newWidth / currentWidth, newHeight / currentHeight),
+                _ => 1f
+            };
+            
+            Vector3 scaleVector = new(scaleFactor, scaleFactor, scaleFactor);
+            model.transform.localScale = Vector3.Scale(model.transform.localScale, scaleVector);
+        }
+
+        private Vector3[] GetModel3DBounds(GameObject model)
+        {
             Vector3[] boundPoints = new Vector3[8];
 
             boundPoints[0] = model.GetComponentInChildren<MeshRenderer>().bounds.min;
@@ -254,10 +273,12 @@ namespace YOLOQuestUnity.YOLO.Display
             boundPoints[6] = new Vector3(boundPoints[1].x, boundPoints[0].y, boundPoints[1].z);
             boundPoints[7] = new Vector3(boundPoints[1].x, boundPoints[1].y, boundPoints[0].z);
 
-            Debug.Log("Max Current: " + boundPoints[1]);
-            Debug.Log("Min Current: " + boundPoints[0]);
+            return boundPoints;
+        }
 
-            Vector2[] screenPoints = boundPoints.Select(boundPoint => (Vector2)_camera.WorldToScreenPoint(boundPoint)).ToArray();
+        private (Vector2, Vector2) GetModel2DBounds(Vector3[] bounds3D)
+        {
+            Vector2[] screenPoints = bounds3D.Select(boundPoint => (Vector2)_camera.WorldToScreenPoint(boundPoint)).ToArray();
 
             Vector2 maxPoint = screenPoints[0];
             Vector2 minPoint = screenPoints[0];
@@ -268,27 +289,7 @@ namespace YOLOQuestUnity.YOLO.Display
                 if (screenPoint.x <= minPoint.x && screenPoint.y <= minPoint.y) minPoint = screenPoint;
             }
 
-            var currentWidth = Math.Abs(maxPoint.x - minPoint.x);
-            var currentHeight = Math.Abs(maxPoint.y - minPoint.y);
-            var scaleFactor = _scaleType switch
-            {
-                ScaleType.WIDTH => newWidth / currentWidth,
-                ScaleType.HEIGHT => newHeight / currentHeight,
-                ScaleType.AVERAGE => ((newWidth / currentWidth) + (newHeight / currentHeight)) / 2,
-                ScaleType.MIN => Math.Min(newWidth / currentWidth, newHeight / currentHeight),
-                ScaleType.MAX => Math.Max(newWidth / currentWidth, newHeight / currentHeight),
-                _ => 1f,
-            };
-            
-            Debug.Log($"Scaling {model.name} by {scaleFactor}");
-            Vector3 scaleVector = new Vector3(scaleFactor, scaleFactor, scaleFactor);
-            
-            Debug.Log("Old Scale: " + model.transform.localScale);
-            Vector3 oldScale = model.transform.localScale;
-            oldScale.Scale(scaleVector);
-            
-            model.transform.localScale = oldScale;
-            Debug.Log("New Scale: " + model.transform.localScale);
+            return (minPoint, maxPoint);
         }
 
         private void UpdateModel(DetectedObject obj, int id, Vector3 newPosition, Quaternion newRotation, GameObject model, bool useRaycastNormal)
