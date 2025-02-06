@@ -1,11 +1,12 @@
 using AYellowpaper.SerializedCollections;
 using Meta.XR;
 using Meta.XR.MRUtilityKit;
-using NUnit.Framework.Interfaces;
+using Unity.XR.Oculus;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Diagnostics;
 using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
 
@@ -64,6 +65,7 @@ namespace YOLOQuestUnity.YOLO.Display
             SceneManager.SceneLoadedEvent.AddListener(OnSceneLoad);
             SceneManager.RoomUpdatedEvent.AddListener(OnSceneUpdated);
             _environmentRaycastManager = GetComponent<EnvironmentRaycastManager>();
+            Unity.XR.Oculus.Utils.SetupEnvironmentDepth(new Unity.XR.Oculus.Utils.EnvironmentDepthCreateParams());
         }
 
         public void DisplayModels(List<DetectedObject> objects, Camera referenceCamera)
@@ -109,7 +111,7 @@ namespace YOLOQuestUnity.YOLO.Display
                         var model = Instantiate(_cocoModels[obj.CocoName]);
                         modelList.Add(objectCounts[obj.CocoClass], model);
                         Debug.Log($"Hit Confidence: {hitConfidence}");
-                        UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.2f);
+                        UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5f);
                         ModelCount++;
                     }
                     else
@@ -123,7 +125,7 @@ namespace YOLOQuestUnity.YOLO.Display
                     {
                         Debug.Log("Using existing object");
                         var model = modelList[objectCounts[obj.CocoClass]];
-                        UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.2f);
+                        UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5f);
                     }
                 }
             }
@@ -152,83 +154,7 @@ namespace YOLOQuestUnity.YOLO.Display
             //}
         }
 
-        private bool IsDuplicate(Vector3 spawnPosition, Dictionary<int, GameObject> modelList)
-        {
-            foreach (var (id, model) in modelList)
-            {
-                // if "close enough" to new model, don't add
-                // Euclidian distance?
-
-                var distance = Vector3.Distance(spawnPosition, model.transform.position);
-                if (distance < DistanceThreshold)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-        private Vector3 ImageToWorldCoordinates(Vector2 coordinates)
-        {
-
-            Vector3 screenPoint = ImageToScreenCoordinates(coordinates);
-
-            float newX = screenPoint.x;
-            float newY = screenPoint.y;
-
-            float spawnDepth = 1.5f;
-            if (_sceneLoaded && currentRoom != null)
-            {
-                Debug.Log("Testing Depth");
-
-                Ray ray = _camera.ScreenPointToRay(new Vector2(newX, newY));
-                if (currentRoom.Raycast(ray, 500, out RaycastHit hit, out MRUKAnchor anchor))
-                {
-                    Debug.Log($"Hit {anchor.Label}");
-                    spawnDepth = hit.distance;
-                }
-            }
-
-            Vector3 newWorldPoint = _camera.ScreenToWorldPoint(new Vector3(newX, newY, spawnDepth));
-
-            return newWorldPoint;
-        }
-
-        public (Vector3, Quaternion, float) GetObjectWorldCoordinates(DetectedObject obj)
-        {
-            Vector3 position = Vector3.zero;
-            Quaternion rotation = Quaternion.identity;
-            float hitConfidence = 0;
-
-            if (_environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
-            {
-                Ray ray = _camera.ScreenPointToRay(ImageToScreenCoordinates(obj.BoundingBox.center));
-                if (_environmentRaycastManager.Raycast(ray, out EnvironmentRaycastHit hit))
-                {
-                    position = hit.point;
-                    rotation = Quaternion.LookRotation(hit.normal);
-                    hitConfidence = hit.normalConfidence;
-                }
-
-                Debug.Log($"Hit {hit.status}");
-            }
-            else position = ImageToWorldCoordinates(obj.BoundingBox.center);
-
-            return (position, rotation, hitConfidence);
-        }
-
-        private Vector2 ImageToScreenCoordinates(Vector2 coordinates)
-        {
-            FeedDimensions feedDimensions = _videoFeedManager.GetFeedDimensions();
-
-            float cameraWidthScale = _camera.pixelWidth / feedDimensions.Width;
-            float cameraHeightScale = _camera.pixelHeight / feedDimensions.Height;
-
-            float newX = coordinates.x * cameraWidthScale;
-            float newY = _camera.pixelHeight - coordinates.y * cameraHeightScale;
-
-            return new Vector2(newX, newY);
-        }
+        #region Model Methods
 
         private void RescaleObject(DetectedObject obj, GameObject model)
         {
@@ -258,6 +184,171 @@ namespace YOLOQuestUnity.YOLO.Display
             
             Vector3 scaleVector = new(scaleFactor, scaleFactor, scaleFactor);
             model.transform.localScale = Vector3.Scale(model.transform.localScale, scaleVector);
+        }
+
+        private void UpdateModel(DetectedObject obj, int id, Vector3 newPosition, Quaternion newRotation, GameObject model, bool useRaycastNormal)
+        {
+            model.transform.SetPositionAndRotation(newPosition, newRotation);
+
+            if (!useRaycastNormal) model.transform.LookAt(_camera.transform);
+
+            model.name = $"{obj.CocoName} {id}";
+            RescaleObject(obj, model);
+            model.SetActive(true);
+        }
+
+        private bool IsDuplicate(Vector3 spawnPosition, Dictionary<int, GameObject> modelList)
+        {
+            foreach (var (id, model) in modelList)
+            {
+                // if "close enough" to new model, don't add
+                // Euclidian distance?
+
+                var distance = Vector3.Distance(spawnPosition, model.transform.position);
+                if (distance < DistanceThreshold)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        #endregion
+
+        #region Helper Methods
+
+        private Vector3 ImageToWorldCoordinates(Vector2 coordinates)
+        {
+
+            Vector3 screenPoint = ImageToScreenCoordinates(coordinates);
+
+            float newX = screenPoint.x;
+            float newY = screenPoint.y;
+
+            float spawnDepth = 1.5f;
+            if (_sceneLoaded && currentRoom != null)
+            {
+                Debug.Log("Testing Depth");
+
+                Ray ray = _camera.ScreenPointToRay(new Vector2(newX, newY));
+                if (currentRoom.Raycast(ray, 500, out RaycastHit hit, out MRUKAnchor anchor))
+                {
+                    Debug.Log($"Hit {anchor.Label}");
+                    spawnDepth = hit.distance;
+                }
+            }
+
+            Vector3 newWorldPoint = _camera.ScreenToWorldPoint(new Vector3(newX, newY, spawnDepth));
+
+            return newWorldPoint;
+        }
+
+        public (Vector3, Quaternion, float) GetObjectWorldCoordinates(DetectedObject obj)
+        {
+            const int SpreadWidth = 3;
+            const int SpreadHeight = 3;
+
+            Vector3 position = Vector3.zero;
+            Quaternion rotation = Quaternion.identity;
+            float hitConfidence = 0;
+
+            if (_environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
+            {
+                return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
+                
+                //Preserved for debugging
+                //Ray ray = _camera.ScreenPointToRay(ImageToScreenCoordinates(obj.BoundingBox.center));
+                //if (_environmentRaycastManager.Raycast(ray, out EnvironmentRaycastHit hit))
+                //{
+                //    position = hit.point;
+                //    rotation = Quaternion.LookRotation(hit.normal);
+                //    hitConfidence = hit.normalConfidence;
+                //}
+            }
+            else position = ImageToWorldCoordinates(obj.BoundingBox.center);
+
+            return (position, rotation, hitConfidence);
+        }
+
+        private Vector2 ImageToScreenCoordinates(Vector2 coordinates)
+        {
+            FeedDimensions feedDimensions = _videoFeedManager.GetFeedDimensions();
+
+            float cameraWidthScale = _camera.pixelWidth / feedDimensions.Width;
+            float cameraHeightScale = _camera.pixelHeight / feedDimensions.Height;
+
+            float newX = coordinates.x * cameraWidthScale;
+            float newY = _camera.pixelHeight - coordinates.y * cameraHeightScale;
+
+            return new Vector2(newX, newY);
+        }
+
+        private EnvironmentRaycastHit[] FireRaycastSpread(DetectedObject obj, int spreadWidth, int spreadHeight)
+        {
+            if (spreadWidth <= 0 || spreadHeight <= 0) throw new IndexOutOfRangeException("Spread width and spread height must both be greater than 0");
+
+            if (spreadWidth % 2 == 0) spreadWidth += 1;
+            if (spreadHeight % 2 == 0) spreadHeight += 1;
+
+            Vector2[] rayPoints = new Vector2[9];
+            rayPoints[4] = ImageToScreenCoordinates(obj.BoundingBox.center);
+
+            float yDist = 0.01f * _camera.pixelHeight;
+            float xDist = 0.01f * _camera.pixelWidth;
+
+            float currentY = rayPoints[4].y - yDist;
+            float currentX = rayPoints[4].x - xDist;
+
+            for (int i = 0; i < spreadHeight; i++)
+            {
+                for (int j = 0; j < spreadWidth; j++)
+                {
+                    if (i == Math.Floor((float)spreadHeight / 2) && j == Math.Floor((float)spreadWidth / 2)) continue;
+                    rayPoints[i * spreadWidth + j] = ImageToScreenCoordinates(new Vector2(currentX, currentY));
+                    currentX += xDist;
+                }
+
+                currentY += yDist;
+                currentX = rayPoints[4].x - xDist;
+            }
+
+            // Could also filter points by closeness
+
+            Ray[] rays = rayPoints.Select(point => _camera.ScreenPointToRay(point)).ToArray();
+
+            EnvironmentRaycastHit[] hits = rays.Select(ray =>
+            {
+                _environmentRaycastManager.Raycast(ray, out EnvironmentRaycastHit hit);
+                return hit;
+            }).Where(hit => hit.status == EnvironmentRaycastHitStatus.Hit).ToArray();
+
+            return hits;
+        }
+
+        private (Vector3, Quaternion, float) AverageRaycastHits(EnvironmentRaycastHit[] hits)
+        {
+            Vector3 pointSum = Vector3.zero;
+            Vector3 normalSum = Vector3.zero;
+            float confidenceSum = 0;
+            int normalCount = 0;
+
+            foreach (EnvironmentRaycastHit hit in hits)
+            {
+                pointSum += hit.point;
+                if (hit.normalConfidence > 0.5f)
+                {
+                    normalSum += hit.normal;
+                    confidenceSum += hit.normalConfidence;
+                    normalCount++;
+                }
+            }
+
+            Vector3 averagePosition = pointSum / hits.Length;
+            Quaternion averageRotation = Quaternion.LookRotation(normalSum / hits.Length);
+            float averageHitConfidence = confidenceSum / normalCount;
+
+            return (averagePosition, averageRotation, averageHitConfidence);
         }
 
         private Vector3[] GetModel3DBounds(GameObject model)
@@ -292,18 +383,6 @@ namespace YOLOQuestUnity.YOLO.Display
             return (minPoint, maxPoint);
         }
 
-        private void UpdateModel(DetectedObject obj, int id, Vector3 newPosition, Quaternion newRotation, GameObject model, bool useRaycastNormal)
-        {
-            model.transform.SetPositionAndRotation(newPosition, newRotation);
-
-            if (!useRaycastNormal) model.transform.LookAt(_camera.transform);
-
-            model.name = $"{obj.CocoName} {id}";
-            RescaleObject(obj, model);
-            model.SetActive(true);
-        }
-
-
         private void OnSceneLoad()
         {
             _sceneLoaded = true;
@@ -323,5 +402,7 @@ namespace YOLOQuestUnity.YOLO.Display
             MIN,
             MAX
         }
+
+        #endregion
     }
 }

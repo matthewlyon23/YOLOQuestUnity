@@ -5,7 +5,8 @@
         "AYellowpaper.SerializedCollections",
         "meta.xr.mrutilitykit",
         "YOLOQuestUnity.Utilities",
-        "YOLOQuestUnity.ObjectDetection"
+        "YOLOQuestUnity.ObjectDetection",
+        "Unity.XR.Oculus"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
