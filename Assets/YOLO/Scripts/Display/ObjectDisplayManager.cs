@@ -1,12 +1,10 @@
 using AYellowpaper.SerializedCollections;
 using Meta.XR;
 using Meta.XR.MRUtilityKit;
-using Unity.XR.Oculus;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Diagnostics;
 using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
 
@@ -218,32 +216,6 @@ namespace YOLOQuestUnity.YOLO.Display
 
         #region Helper Methods
 
-        private Vector3 ImageToWorldCoordinates(Vector2 coordinates)
-        {
-
-            Vector3 screenPoint = ImageToScreenCoordinates(coordinates);
-
-            float newX = screenPoint.x;
-            float newY = screenPoint.y;
-
-            float spawnDepth = 1.5f;
-            if (_sceneLoaded && currentRoom != null)
-            {
-                Debug.Log("Testing Depth");
-
-                Ray ray = _camera.ScreenPointToRay(new Vector2(newX, newY));
-                if (currentRoom.Raycast(ray, 500, out RaycastHit hit, out MRUKAnchor anchor))
-                {
-                    Debug.Log($"Hit {anchor.Label}");
-                    spawnDepth = hit.distance;
-                }
-            }
-
-            Vector3 newWorldPoint = _camera.ScreenToWorldPoint(new Vector3(newX, newY, spawnDepth));
-
-            return newWorldPoint;
-        }
-
         public (Vector3, Quaternion, float) GetObjectWorldCoordinates(DetectedObject obj)
         {
             const int SpreadWidth = 3;
@@ -271,17 +243,61 @@ namespace YOLOQuestUnity.YOLO.Display
             return (position, rotation, hitConfidence);
         }
 
-        private Vector2 ImageToScreenCoordinates(Vector2 coordinates)
+        private (Vector3, Quaternion, float) AverageRaycastHits(EnvironmentRaycastHit[] hits)
         {
-            FeedDimensions feedDimensions = _videoFeedManager.GetFeedDimensions();
+            Vector3 pointSum = Vector3.zero;
+            Vector3 normalSum = Vector3.zero;
+            float confidenceSum = 0;
+            int normalCount = 0;
 
-            float cameraWidthScale = _camera.pixelWidth / feedDimensions.Width;
-            float cameraHeightScale = _camera.pixelHeight / feedDimensions.Height;
+            foreach (EnvironmentRaycastHit hit in hits)
+            {
+                pointSum += hit.point;
+                if (hit.normalConfidence > 0.5f)
+                {
+                    normalSum += hit.normal;
+                    confidenceSum += hit.normalConfidence;
+                    normalCount++;
+                }
+            }
 
-            float newX = coordinates.x * cameraWidthScale;
-            float newY = _camera.pixelHeight - coordinates.y * cameraHeightScale;
+            Vector3 averagePosition = pointSum / hits.Length;
+            Quaternion averageRotation = Quaternion.LookRotation(normalSum / hits.Length);
+            float averageHitConfidence = confidenceSum / normalCount;
 
-            return new Vector2(newX, newY);
+            return (averagePosition, averageRotation, averageHitConfidence);
+        }
+
+        private (Vector2, Vector2) GetModel2DBounds(Vector3[] bounds3D)
+        {
+            Vector2[] screenPoints = bounds3D.Select(boundPoint => (Vector2)_camera.WorldToScreenPoint(boundPoint)).ToArray();
+
+            Vector2 maxPoint = screenPoints[0];
+            Vector2 minPoint = screenPoints[0];
+
+            foreach (Vector3 screenPoint in screenPoints)
+            {
+                if (screenPoint.x >= maxPoint.x && screenPoint.y >= maxPoint.y) maxPoint = screenPoint;
+                if (screenPoint.x <= minPoint.x && screenPoint.y <= minPoint.y) minPoint = screenPoint;
+            }
+
+            return (minPoint, maxPoint);
+        }
+
+        private Vector3[] GetModel3DBounds(GameObject model)
+        {
+            Vector3[] boundPoints = new Vector3[8];
+
+            boundPoints[0] = model.GetComponentInChildren<MeshRenderer>().bounds.min;
+            boundPoints[1] = model.GetComponentInChildren<MeshRenderer>().bounds.max;
+            boundPoints[2] = new Vector3(boundPoints[0].x, boundPoints[0].y, boundPoints[1].z);
+            boundPoints[3] = new Vector3(boundPoints[0].x, boundPoints[1].y, boundPoints[0].z);
+            boundPoints[4] = new Vector3(boundPoints[1].x, boundPoints[0].y, boundPoints[0].z);
+            boundPoints[5] = new Vector3(boundPoints[0].x, boundPoints[1].y, boundPoints[1].z);
+            boundPoints[6] = new Vector3(boundPoints[1].x, boundPoints[0].y, boundPoints[1].z);
+            boundPoints[7] = new Vector3(boundPoints[1].x, boundPoints[1].y, boundPoints[0].z);
+
+            return boundPoints;
         }
 
         private EnvironmentRaycastHit[] FireRaycastSpread(DetectedObject obj, int spreadWidth, int spreadHeight)
@@ -326,61 +342,43 @@ namespace YOLOQuestUnity.YOLO.Display
             return hits;
         }
 
-        private (Vector3, Quaternion, float) AverageRaycastHits(EnvironmentRaycastHit[] hits)
+        private Vector3 ImageToWorldCoordinates(Vector2 coordinates)
         {
-            Vector3 pointSum = Vector3.zero;
-            Vector3 normalSum = Vector3.zero;
-            float confidenceSum = 0;
-            int normalCount = 0;
 
-            foreach (EnvironmentRaycastHit hit in hits)
+            Vector3 screenPoint = ImageToScreenCoordinates(coordinates);
+
+            float newX = screenPoint.x;
+            float newY = screenPoint.y;
+
+            float spawnDepth = 1.5f;
+            if (_sceneLoaded && currentRoom != null)
             {
-                pointSum += hit.point;
-                if (hit.normalConfidence > 0.5f)
+                Debug.Log("Testing Depth");
+
+                Ray ray = _camera.ScreenPointToRay(new Vector2(newX, newY));
+                if (currentRoom.Raycast(ray, 500, out RaycastHit hit, out MRUKAnchor anchor))
                 {
-                    normalSum += hit.normal;
-                    confidenceSum += hit.normalConfidence;
-                    normalCount++;
+                    Debug.Log($"Hit {anchor.Label}");
+                    spawnDepth = hit.distance;
                 }
             }
 
-            Vector3 averagePosition = pointSum / hits.Length;
-            Quaternion averageRotation = Quaternion.LookRotation(normalSum / hits.Length);
-            float averageHitConfidence = confidenceSum / normalCount;
+            Vector3 newWorldPoint = _camera.ScreenToWorldPoint(new Vector3(newX, newY, spawnDepth));
 
-            return (averagePosition, averageRotation, averageHitConfidence);
+            return newWorldPoint;
         }
 
-        private Vector3[] GetModel3DBounds(GameObject model)
+        private Vector2 ImageToScreenCoordinates(Vector2 coordinates)
         {
-            Vector3[] boundPoints = new Vector3[8];
+            FeedDimensions feedDimensions = _videoFeedManager.GetFeedDimensions();
 
-            boundPoints[0] = model.GetComponentInChildren<MeshRenderer>().bounds.min;
-            boundPoints[1] = model.GetComponentInChildren<MeshRenderer>().bounds.max;
-            boundPoints[2] = new Vector3(boundPoints[0].x, boundPoints[0].y, boundPoints[1].z);
-            boundPoints[3] = new Vector3(boundPoints[0].x, boundPoints[1].y, boundPoints[0].z);
-            boundPoints[4] = new Vector3(boundPoints[1].x, boundPoints[0].y, boundPoints[0].z);
-            boundPoints[5] = new Vector3(boundPoints[0].x, boundPoints[1].y, boundPoints[1].z);
-            boundPoints[6] = new Vector3(boundPoints[1].x, boundPoints[0].y, boundPoints[1].z);
-            boundPoints[7] = new Vector3(boundPoints[1].x, boundPoints[1].y, boundPoints[0].z);
+            float cameraWidthScale = _camera.pixelWidth / feedDimensions.Width;
+            float cameraHeightScale = _camera.pixelHeight / feedDimensions.Height;
 
-            return boundPoints;
-        }
+            float newX = coordinates.x * cameraWidthScale;
+            float newY = _camera.pixelHeight - coordinates.y * cameraHeightScale;
 
-        private (Vector2, Vector2) GetModel2DBounds(Vector3[] bounds3D)
-        {
-            Vector2[] screenPoints = bounds3D.Select(boundPoint => (Vector2)_camera.WorldToScreenPoint(boundPoint)).ToArray();
-
-            Vector2 maxPoint = screenPoints[0];
-            Vector2 minPoint = screenPoints[0];
-
-            foreach (Vector3 screenPoint in screenPoints)
-            {
-                if (screenPoint.x >= maxPoint.x && screenPoint.y >= maxPoint.y) maxPoint = screenPoint;
-                if (screenPoint.x <= minPoint.x && screenPoint.y <= minPoint.y) minPoint = screenPoint;
-            }
-
-            return (minPoint, maxPoint);
+            return new Vector2(newX, newY);
         }
 
         private void OnSceneLoad()
