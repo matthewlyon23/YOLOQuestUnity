@@ -1,10 +1,11 @@
 {
-    "name": "YOLODisplayASsembly",
+    "name": "YOLOQuestUnity.Display",
     "rootNamespace": "",
     "references": [
-        "YOLOObjectDetection",
         "AYellowpaper.SerializedCollections",
-        "YOLOQuestUnityUtilities"
+        "meta.xr.mrutilitykit",
+        "YOLOQuestUnity.Utilities",
+        "YOLOQuestUnity.ObjectDetection"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -9,18 +9,18 @@ namespace YOLOQuestUnity.Utilities
     public class IPCameraManager : VideoFeedManager
     {
 
-        [SerializeField] private string _imageUrl = "http://ip:port/shot.jpg";
-        [SerializeField] private bool _downloadAsImage = true;
-        [SerializeField] private string username;
-        [SerializeField] private string password;
+        [SerializeField] protected string _imageUrl = "http://ip:port/shot.jpg";
+        [SerializeField] protected bool _downloadAsImage = true;
+        [SerializeField] protected string username;
+        [SerializeField] protected string password;
 
-        private UnityWebRequest _webRequest;
-        private Texture2D _currentTexture;
+        protected UnityWebRequest _webRequest;
+        protected Texture2D _currentTexture;
 
 
-        private bool _gettingFrame = false;
+        protected bool _gettingFrame = false;
 
-        private void Update()
+        protected void Update()
         {
             if (!_gettingFrame)
             {
@@ -29,7 +29,7 @@ namespace YOLOQuestUnity.Utilities
             }
         }
 
-        private IEnumerator GetLatestImageFrame()
+        protected IEnumerator GetLatestImageFrame()
         {
             _webRequest = UnityWebRequestTexture.GetTexture(_imageUrl);
 
@@ -40,12 +40,15 @@ namespace YOLOQuestUnity.Utilities
 
             yield return _webRequest.SendWebRequest();
 
+            Texture2D tempTexture = null;
+
             try
             {
                 if (_webRequest.result != UnityWebRequest.Result.Success) throw new Exception("Web request failed");
                 if (!_webRequest.GetResponseHeaders()["Content-Type"].StartsWith("image/")) throw new IPCameraException("Invalid URL: The resource is not an image");
-                var tempTexture = DownloadHandlerTexture.GetContent(_webRequest);
-                _currentTexture = ImageRotator.RotateImage(tempTexture, 90);
+                tempTexture = DownloadHandlerTexture.GetContent(_webRequest);
+                if (_currentTexture != null) Destroy(_currentTexture);
+                _currentTexture = tempTexture;
             }
             catch (Exception e)
             {

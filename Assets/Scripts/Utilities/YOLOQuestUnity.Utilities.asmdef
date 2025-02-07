@@ -1,5 +1,5 @@
 {
-    "name": "YOLOQuestUnityUtilities",
+    "name": "YOLOQuestUnity.Utilities",
     "rootNamespace": "",
     "references": [
         "GUID:9f8f9190aafa95a438cc3b0abb0ca9fe"
