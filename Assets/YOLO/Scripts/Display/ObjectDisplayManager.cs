@@ -12,7 +12,6 @@ namespace YOLOQuestUnity.YOLO.Display
 {
     public class ObjectDisplayManager : MonoBehaviour
     {
-
         #region Model Management
 
         private Dictionary<int, Dictionary<int, GameObject>> _activeModels;
@@ -32,7 +31,6 @@ namespace YOLOQuestUnity.YOLO.Display
         public float DistanceThreshold { get { return _distanceThreshold; } private set { _distanceThreshold = value; } }
 
         [SerializeField] private ScaleType _scaleType = ScaleType.AVERAGE;
-
 
         #endregion
 
@@ -102,26 +100,15 @@ namespace YOLOQuestUnity.YOLO.Display
 
                 if (objectCounts[obj.CocoClass] > modelList.Count && ModelCount != MaxModelCount)
                 {
-                    if (_cocoModels.ContainsKey(obj.CocoName) && _cocoModels[obj.CocoName] != null)
-                    {
-
-                        Debug.Log("Spawning new object");
-                        var model = Instantiate(_cocoModels[obj.CocoName]);
-                        modelList.Add(objectCounts[obj.CocoClass], model);
-                        Debug.Log($"Hit Confidence: {hitConfidence}");
-                        UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5f);
-                        ModelCount++;
-                    }
-                    else
-                    {
-                        Debug.Log("Error: No model provided for the detected class.");
-                    }
+                    var model = Instantiate(_cocoModels[obj.CocoName]);
+                    modelList.Add(objectCounts[obj.CocoClass], model);
+                    UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5f);
+                    ModelCount++;
                 }
                 else if (objectCounts[obj.CocoClass] <= modelList.Count)
                 {
                     if (MovingObjects)
                     {
-                        Debug.Log("Using existing object");
                         var model = modelList[objectCounts[obj.CocoClass]];
                         UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5f);
                     }
@@ -228,15 +215,6 @@ namespace YOLOQuestUnity.YOLO.Display
             if (_environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
             {
                 return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
-                
-                //Preserved for debugging
-                //Ray ray = _camera.ScreenPointToRay(ImageToScreenCoordinates(obj.BoundingBox.center));
-                //if (_environmentRaycastManager.Raycast(ray, out EnvironmentRaycastHit hit))
-                //{
-                //    position = hit.point;
-                //    rotation = Quaternion.LookRotation(hit.normal);
-                //    hitConfidence = hit.normalConfidence;
-                //}
             }
             else position = ImageToWorldCoordinates(obj.BoundingBox.center);
 
@@ -328,8 +306,6 @@ namespace YOLOQuestUnity.YOLO.Display
                 currentY += yDist;
                 currentX = rayPoints[4].x - xDist;
             }
-
-            // Could also filter points by closeness
 
             Ray[] rays = rayPoints.Select(point => _camera.ScreenPointToRay(point)).ToArray();
 

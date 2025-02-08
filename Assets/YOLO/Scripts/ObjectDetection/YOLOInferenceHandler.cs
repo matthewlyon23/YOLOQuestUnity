@@ -1,16 +1,14 @@
-using System;
 using System.Collections;
 using Unity.Sentis;
 using UnityEngine;
 using YOLOQuestUnity.Inference;
-using YOLOQuestUnity.Utilities;
 
 namespace YOLOQuestUnity.ObjectDetection
 {
     public class YOLOInferenceHandler : InferenceHandler<Texture2D>
     {
-        private TextureAnalyser _textureAnalyser;
-        private int _size;
+        private readonly TextureAnalyser _textureAnalyser;
+        private readonly int _size;
 
         public YOLOInferenceHandler(ModelAsset modelAsset, out int size)
         {
@@ -25,7 +23,7 @@ namespace YOLOQuestUnity.ObjectDetection
 
                 var inputs = graph.AddInputs(_model);
                 var outputs = Functional.Forward(_model, inputs);
-                
+
                 var slicedClasses = outputs[0][.., 4..84, ..];
                 var argMaxClasses = Functional.ArgMax(slicedClasses, 1, true);
                 var confidences = Functional.Gather(slicedClasses, 1, argMaxClasses);
@@ -37,7 +35,6 @@ namespace YOLOQuestUnity.ObjectDetection
 
             _worker = new Worker(_model, BackendType.GPUCompute);
             _textureAnalyser = new TextureAnalyser(_worker);
-
         }
 
         public override Awaitable<Tensor<float>> Run(Texture2D input)
