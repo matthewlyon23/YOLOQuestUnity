@@ -302,7 +302,7 @@ namespace YOLOQuestUnity.YOLO.Display
 
         private EnvironmentRaycastHit[] FireRaycastSpread(DetectedObject obj, int spreadWidth, int spreadHeight)
         {
-            if (spreadWidth <= 0 || spreadHeight <= 0) throw new IndexOutOfRangeException("Spread width and spread height must both be greater than 0");
+            if (spreadWidth <= 0 || spreadHeight <= 0) throw new Exception("Spread width and spread height must both be greater than 0");
 
             if (spreadWidth % 2 == 0) spreadWidth += 1;
             if (spreadHeight % 2 == 0) spreadHeight += 1;
@@ -353,19 +353,14 @@ namespace YOLOQuestUnity.YOLO.Display
             float spawnDepth = 1.5f;
             if (_sceneLoaded && currentRoom != null)
             {
-                Debug.Log("Testing Depth");
-
                 Ray ray = _camera.ScreenPointToRay(new Vector2(newX, newY));
                 if (currentRoom.Raycast(ray, 500, out RaycastHit hit, out MRUKAnchor anchor))
                 {
-                    Debug.Log($"Hit {anchor.Label}");
-                    spawnDepth = hit.distance;
+                    return hit.point;
                 }
             }
 
-            Vector3 newWorldPoint = _camera.ScreenToWorldPoint(new Vector3(newX, newY, spawnDepth));
-
-            return newWorldPoint;
+           return _camera.ScreenToWorldPoint(new Vector3(newX, newY, spawnDepth));
         }
 
         private Vector2 ImageToScreenCoordinates(Vector2 coordinates)
