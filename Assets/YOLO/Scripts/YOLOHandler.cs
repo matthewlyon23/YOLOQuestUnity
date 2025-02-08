@@ -58,39 +58,17 @@ namespace YOLOQuestUnity.YOLO
 
         #endregion
 
-        #region Debugging
-
-        [SerializeField] private TextMeshProUGUI T1;
-        [SerializeField] private TextMeshProUGUI T2;
-        [SerializeField] private TextMeshProUGUI T3;
-
-        [SerializeField] private Slider slider;
-
-        private void SetLayersPerFrame(float i)
-        {
-            _layersPerFrame = (uint)i;
-        }
-
-        [SerializeField] Texture2D _tempTexture;
-        [SerializeField] RawImage _cameraDisplay;
-
-        #endregion
-
-
         void Start()
         {
             var classJsonString = _classJson.text;
             _classes = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<int, string>>>(classJsonString)["class"];
             _inferenceHandler = new YOLOInferenceHandler(_model, out Size);
             if (_layersPerFrame == 0) _layersPerFrame = 1;
-            slider.onValueChanged.AddListener(SetLayersPerFrame);
             _analysisCamera = GetComponent<Camera>();
         }
 
         void Update()
-        {
-            if (_YOLOCamera.GetTexture() != null && _cameraDisplay != null) _cameraDisplay.texture = _YOLOCamera.GetTexture();
-            
+        {            
             if (_inferenceHandler == null) return;
 
             if (_YOLOCamera == null) return;
