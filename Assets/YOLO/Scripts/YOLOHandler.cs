@@ -63,7 +63,7 @@ namespace YOLOQuestUnity.YOLO
             var classJsonString = _classJson.text;
             _classes = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<int, string>>>(classJsonString)["class"];
             _inferenceHandler = new YOLOInferenceHandler(_model, out Size);
-            if (_layersPerFrame == 0) _layersPerFrame = 1;
+            if (_layersPerFrame <= 0) _layersPerFrame = 1;
             _analysisCamera = GetComponent<Camera>();
         }
 
