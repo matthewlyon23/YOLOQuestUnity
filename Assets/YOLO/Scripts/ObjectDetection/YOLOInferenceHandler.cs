@@ -10,11 +10,11 @@ namespace YOLOQuestUnity.ObjectDetection
         private readonly TextureAnalyser _textureAnalyser;
         private readonly int _size;
 
-        public YOLOInferenceHandler(ModelAsset modelAsset, out int size)
+        public YOLOInferenceHandler(ModelAsset modelAsset, ref int size)
         {
             _model = ModelLoader.Load(modelAsset);
 
-            size = _model.inputs[0].shape.Get(2);
+            if (_model.inputs[0].shape.Get(2) != -1) size = _model.inputs[0].shape.Get(2);
             _size = size;
 
             if (modelAsset.name.Contains("yolo11"))

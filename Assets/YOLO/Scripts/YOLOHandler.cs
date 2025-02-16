@@ -18,9 +18,11 @@ namespace YOLOQuestUnity.YOLO
         [Tooltip("The YOLO model to run.")]
         [SerializeField] private ModelAsset _model;
         [Tooltip("The VideoFeedManager to analyse frames from.")]
-        [SerializeField] private VideoFeedManager _YOLOCamera;
-        [Tooltip("The number of model layers to run per frame. Increases this value will decrease performance.")]
+        public VideoFeedManager _YOLOCamera;
+        [Tooltip("The number of model layers to run per frame. Increasing this value will decrease performance.")]
         [SerializeField] private uint _layersPerFrame = 10;
+        [Tooltip("The size of the input image to the model. This will be overwritten if the model has a fixed input size.")]
+        [SerializeField] private int InputSize = 640;
         [Tooltip("A JSON containing a mapping of class numbers to class names")]
         [SerializeField] private TextAsset _classJson;
         [Tooltip("The ObjectDisplayManager that will handle the spawning of digital double models.")]
@@ -57,9 +59,8 @@ namespace YOLOQuestUnity.YOLO
 
         void Start()
         {
-            var classJsonString = _classJson.text;
-            _classes = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<int, string>>>(classJsonString)["class"];
-            _inferenceHandler = new YOLOInferenceHandler(_model, out Size);
+            _classes = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<int, string>>>(_classJson.text)["class"];
+            _inferenceHandler = new YOLOInferenceHandler(_model, ref InputSize);
             if (_layersPerFrame <= 0) _layersPerFrame = 1;
             _analysisCamera = GetComponent<Camera>();
         }
@@ -115,8 +116,8 @@ namespace YOLOQuestUnity.YOLO
         private List<DetectedObject> PostProcess(Tensor<float> result)
         {
             List<DetectedObject> objects = new();
-            float widthScale = _inputTexture.width / (float)Size;
-            float heightScale = _inputTexture.height / (float)Size;
+            float widthScale = _inputTexture.width / (float)InputSize;
+            float heightScale = _inputTexture.height / (float)InputSize;
 
             for (int i = 0; i < result.shape[2]; i++)
             {
