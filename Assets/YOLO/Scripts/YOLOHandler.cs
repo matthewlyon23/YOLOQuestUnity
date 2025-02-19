@@ -29,6 +29,8 @@ namespace YOLOQuestUnity.YOLO
         [SerializeField] private ObjectDisplayManager _displayManager;
         [Tooltip("The base camera for scene analysis")]
         [SerializeField] private Camera _referenceCamera;
+        [Tooltip("The threshold at which a detection is accepted.")]
+        [SerializeField] private float _confidenceThreshold = 0.5f;
         
         public Camera ReferenceCamera { get => _referenceCamera; set => _referenceCamera = value; }
 
@@ -122,7 +124,7 @@ namespace YOLOQuestUnity.YOLO
             for (int i = 0; i < result.shape[2]; i++)
             {
                 float confidence = result[0, 5, i];
-                if (confidence < 0.7f) continue;
+                if (confidence < _confidenceThreshold) continue;
                 int cocoClass = (int)result[0, 4, i];
                 float centerX = result[0, 0, i] * widthScale;
                 float centerY = result[0, 1, i] * heightScale;
