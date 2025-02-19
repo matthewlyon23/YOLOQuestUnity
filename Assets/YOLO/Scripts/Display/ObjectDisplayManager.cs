@@ -285,29 +285,29 @@ namespace YOLOQuestUnity.YOLO.Display
             if (spreadWidth % 2 == 0) spreadWidth += 1;
             if (spreadHeight % 2 == 0) spreadHeight += 1;
 
-            Vector2[] rayPoints = new Vector2[9];
-            rayPoints[4] = ImageToScreenCoordinates(obj.BoundingBox.center);
+            Vector2[,] rayPoints = new Vector2[spreadHeight, spreadWidth];
+            rayPoints[spreadHeight/2, spreadWidth/2] = ImageToScreenCoordinates(obj.BoundingBox.center);
 
             float yDist = 0.01f * _camera.pixelHeight;
             float xDist = 0.01f * _camera.pixelWidth;
 
-            float currentY = rayPoints[4].y - yDist;
-            float currentX = rayPoints[4].x - xDist;
+            float currentY = rayPoints[spreadHeight/2, spreadWidth/2].y - yDist;
+            float currentX = rayPoints[spreadHeight/2, spreadWidth/2].x - xDist;
 
             for (int i = 0; i < spreadHeight; i++)
             {
                 for (int j = 0; j < spreadWidth; j++)
                 {
-                    if (i == Math.Floor((float)spreadHeight / 2) && j == Math.Floor((float)spreadWidth / 2)) continue;
-                    rayPoints[i * spreadWidth + j] = ImageToScreenCoordinates(new Vector2(currentX, currentY));
+                    if (i == spreadHeight/2 && j == spreadWidth/2) continue;
+                    rayPoints[i, j] = ImageToScreenCoordinates(new Vector2(currentX, currentY));
                     currentX += xDist;
                 }
 
                 currentY += yDist;
-                currentX = rayPoints[4].x - xDist;
+                currentX = rayPoints[spreadHeight / 2, spreadWidth / 2].x - xDist;
             }
 
-            Ray[] rays = rayPoints.Select(point => _camera.ScreenPointToRay(point)).ToArray();
+            Ray[] rays = rayPoints.Cast<Vector2>().Select(point => _camera.ScreenPointToRay(point)).ToArray();
 
             EnvironmentRaycastHit[] hits = rays.Select(ray =>
             {
