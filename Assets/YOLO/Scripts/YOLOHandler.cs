@@ -105,7 +105,7 @@ namespace YOLOQuestUnity.YOLO
                         analysisResultTensor = analysisResult.GetResult();
                         readingBack = false;
 
-                        var detectedObjects = PostProcess(analysisResultTensor);
+                        var detectedObjects = YOLOPostProcessor.PostProcess(analysisResultTensor, _inputTexture, InputSize, _classes, _confidenceThreshold);
                         analysisResultTensor.Dispose();
                         _inferenceHandler.DisposeTensors();
                         inferencePending = false;
