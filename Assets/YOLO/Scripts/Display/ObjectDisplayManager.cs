@@ -8,7 +8,7 @@ using UnityEngine;
 using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
 
-namespace YOLOQuestUnity.YOLO.Display
+namespace YOLOQuestUnity.Display
 {
     public class ObjectDisplayManager : MonoBehaviour
     {
@@ -17,12 +17,16 @@ namespace YOLOQuestUnity.YOLO.Display
         private Dictionary<int, Dictionary<int, GameObject>> _activeModels;
 
         private int _modelCount;
-        [SerializeField] private int _maxModelCount;
+        [Tooltip("The maximum number of models which can spawn at once.")]
+        [SerializeField] private int _maxModelCount = 10;
+        [Tooltip("The minimum distance from an existing model at which a model of the same class can spawn.")]
         [SerializeField] private float _distanceThreshold = 0.5f;
 
+        [Tooltip("The names of the COCO classes to detect and their associated models.")]
         [SerializeField, SerializedDictionary("Coco Class", "3D Model")]
         private SerializedDictionary<string, GameObject> _cocoModels;
 
+        [Tooltip("Use existing models when a new object is detected.")]
         [SerializeField] private bool _movingObjects;
         public bool MovingObjects { get => _movingObjects; set => _movingObjects = value; }
 
@@ -30,12 +34,14 @@ namespace YOLOQuestUnity.YOLO.Display
         public int MaxModelCount { get { return _maxModelCount; } private set { _maxModelCount = value; } }
         public float DistanceThreshold { get { return _distanceThreshold; } private set { _distanceThreshold = value; } }
 
+        [Tooltip("The scaling method to use:\nMIN: Use the minimum of the x and y scale change.\nMAX: Use the maximum of the x and y scale change.\nAVERAGE: Use the average of both the x and y scale change.\nWIDTH: Use the x scale change.\nHEIGHT: Use the y scale change.")]
         [SerializeField] private ScaleType _scaleType = ScaleType.AVERAGE;
 
         #endregion
 
         #region External Data Management
 
+        [Tooltip("The VideoFeedManager used to capture input frames.")]
         [SerializeField] private VideoFeedManager _videoFeedManager;
 
         private Camera _camera;
@@ -72,7 +78,7 @@ namespace YOLOQuestUnity.YOLO.Display
 
             foreach (var obj in objects)
             {
-                if (objectCounts.GetValueOrDefault(obj.CocoClass) == 2) continue;
+                if (objectCounts.GetValueOrDefault(obj.CocoClass) == 3) continue;
 
                 if (!_cocoModels.ContainsKey(obj.CocoName) || _cocoModels[obj.CocoName] == null)
                 {
@@ -98,10 +104,10 @@ namespace YOLOQuestUnity.YOLO.Display
                     objectCounts[obj.CocoClass]++;
                 }
 
-                if (objectCounts[obj.CocoClass] > modelList.Count && ModelCount != MaxModelCount)
+                if ((!MovingObjects || objectCounts[obj.CocoClass] > modelList.Count) && ModelCount != MaxModelCount)
                 {
                     var model = Instantiate(_cocoModels[obj.CocoName]);
-                    modelList.Add(objectCounts[obj.CocoClass], model);
+                    modelList.Add(modelList.Count, model);
                     UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5f);
                     ModelCount++;
                 }
@@ -214,7 +220,14 @@ namespace YOLOQuestUnity.YOLO.Display
 
             if (_environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
             {
+                try
+                {
                 return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
+            }
+                catch
+                {
+                    position = ImageToWorldCoordinates(obj.BoundingBox.center);
+                }
             }
             else position = ImageToWorldCoordinates(obj.BoundingBox.center);
 
@@ -363,6 +376,8 @@ namespace YOLOQuestUnity.YOLO.Display
             currentRoom = room;
         }
 
+        #endregion
+
         private enum ScaleType
         {
             WIDTH,
@@ -371,7 +386,7 @@ namespace YOLOQuestUnity.YOLO.Display
             MIN,
             MAX
         }
-
-        #endregion
     }
+
+    
 }
