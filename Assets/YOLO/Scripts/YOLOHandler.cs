@@ -6,7 +6,7 @@ using UnityEngine;
 using YOLOQuestUnity.Inference;
 using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
-using YOLOQuestUnity.YOLO.Display;
+using YOLOQuestUnity.Display;
 
 namespace YOLOQuestUnity.YOLO
 {
@@ -23,8 +23,16 @@ namespace YOLOQuestUnity.YOLO
         [SerializeField] private uint _layersPerFrame = 10;
         [Tooltip("The size of the input image to the model. This will be overwritten if the model has a fixed input size.")]
         [SerializeField] private int InputSize = 640;
+        [Tooltip("The number of model layers to run per frame. Increasing this value will decrease performance.")]
+        [SerializeField] private uint _layersPerFrame = 10;
+        [Tooltip("The threshold at which a detection is accepted.")]
+        [SerializeField] private float _confidenceThreshold = 0.5f;
         [Tooltip("A JSON containing a mapping of class numbers to class names")]
         [SerializeField] private TextAsset _classJson;
+        [Tooltip("The VideoFeedManager to analyse frames from.")]
+        public VideoFeedManager _YOLOCamera;
+        [Tooltip("The base camera for scene analysis")]
+        [SerializeField] private Camera _referenceCamera;
         [Tooltip("The ObjectDisplayManager that will handle the spawning of digital double models.")]
         [SerializeField] private ObjectDisplayManager _displayManager;
         [Tooltip("The base camera for scene analysis")]
@@ -32,7 +40,7 @@ namespace YOLOQuestUnity.YOLO
         [Tooltip("The threshold at which a detection is accepted.")]
         [SerializeField] private float _confidenceThreshold = 0.5f;
         
-        public Camera ReferenceCamera { get => _referenceCamera; set => _referenceCamera = value; }
+        public Camera ReferenceCamera { get => _referenceCamera; private set => _referenceCamera = value; }
 
         #endregion
 
@@ -112,26 +120,7 @@ namespace YOLOQuestUnity.YOLO
                 analysisResultTensor.Dispose();
                 analysisResultTensor = null;
                 _inferenceHandler.DisposeTensors();
-            }
-        }
-
-        private List<DetectedObject> PostProcess(Tensor<float> result)
-        {
-            List<DetectedObject> objects = new();
-            float widthScale = _inputTexture.width / (float)InputSize;
-            float heightScale = _inputTexture.height / (float)InputSize;
-
-            for (int i = 0; i < result.shape[2]; i++)
-            {
-                float confidence = result[0, 5, i];
-                if (confidence < _confidenceThreshold) continue;
-                int cocoClass = (int)result[0, 4, i];
-                float centerX = result[0, 0, i] * widthScale;
-                float centerY = result[0, 1, i] * heightScale;
-                float width = result[0, 2, i] * widthScale;
-                float height = result[0, 3, i] * heightScale;
-
-                objects.Add(new DetectedObject(centerX, centerY, width, height, cocoClass, _classes[cocoClass], confidence));
+                inferencePending = false;
             }
 
             objects.Sort((x, y) => y.Confidence.CompareTo(x.Confidence));
