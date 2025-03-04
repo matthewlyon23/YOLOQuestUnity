@@ -17,10 +17,6 @@ namespace YOLOQuestUnity.YOLO
 
         [Tooltip("The YOLO model to run.")]
         [SerializeField] private ModelAsset _model;
-        [Tooltip("The VideoFeedManager to analyse frames from.")]
-        public VideoFeedManager _YOLOCamera;
-        [Tooltip("The number of model layers to run per frame. Increasing this value will decrease performance.")]
-        [SerializeField] private uint _layersPerFrame = 10;
         [Tooltip("The size of the input image to the model. This will be overwritten if the model has a fixed input size.")]
         [SerializeField] private int InputSize = 640;
         [Tooltip("The number of model layers to run per frame. Increasing this value will decrease performance.")]
@@ -35,10 +31,6 @@ namespace YOLOQuestUnity.YOLO
         [SerializeField] private Camera _referenceCamera;
         [Tooltip("The ObjectDisplayManager that will handle the spawning of digital double models.")]
         [SerializeField] private ObjectDisplayManager _displayManager;
-        [Tooltip("The base camera for scene analysis")]
-        [SerializeField] private Camera _referenceCamera;
-        [Tooltip("The threshold at which a detection is accepted.")]
-        [SerializeField] private float _confidenceThreshold = 0.5f;
         
         public Camera ReferenceCamera { get => _referenceCamera; private set => _referenceCamera = value; }
 
@@ -46,11 +38,8 @@ namespace YOLOQuestUnity.YOLO
 
         #region InstanceFields
 
-        private int Size = 640;
         private InferenceHandler<Texture2D> _inferenceHandler;
-        private int _frameCount;
 
-        private int FrameCount { get => _frameCount; set => _frameCount = value % 30; }
         private bool inferencePending = false;
         private bool readingBack = false;
         private Tensor<float> analysisResultTensor;
@@ -109,6 +98,7 @@ namespace YOLOQuestUnity.YOLO
                         analysisResultTensor.Dispose();
                         _inferenceHandler.DisposeTensors();
                         inferencePending = false;
+                        analysisResultTensor = null;
 
                         _displayManager.DisplayModels(detectedObjects, _analysisCamera);
                     });
