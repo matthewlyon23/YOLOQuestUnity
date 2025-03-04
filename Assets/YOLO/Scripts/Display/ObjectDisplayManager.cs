@@ -68,6 +68,7 @@ namespace YOLOQuestUnity.Display
             SceneManager.RoomUpdatedEvent.AddListener(OnSceneUpdated);
             _environmentRaycastManager = GetComponent<EnvironmentRaycastManager>();
             Unity.XR.Oculus.Utils.SetupEnvironmentDepth(new Unity.XR.Oculus.Utils.EnvironmentDepthCreateParams());
+            _videoFeedManager  = GameObject.FindGameObjectWithTag("VideoFeedManager").GetComponent<VideoFeedManager>();
         }
 
         public void DisplayModels(List<DetectedObject> objects, Camera referenceCamera)
@@ -106,6 +107,7 @@ namespace YOLOQuestUnity.Display
 
                 if ((!MovingObjects || objectCounts[obj.CocoClass] > modelList.Count) && ModelCount != MaxModelCount)
                 {
+                    Debug.Log("Spawning new object");
                     var model = Instantiate(_cocoModels[obj.CocoName]);
                     modelList.Add(modelList.Count, model);
                     UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5f);
@@ -119,6 +121,18 @@ namespace YOLOQuestUnity.Display
                         UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5f);
                     }
                 }
+
+                #region Evalutation
+
+                Debug.Log($"{obj.CocoName} detected with confidence {obj.Confidence}.");
+
+                if (obj.CocoName == "tv")
+                {
+                   var reportedDistance = Vector3.Distance(spawnPosition, _camera.transform.position);
+                   Debug.Log($"Distance to {obj.CocoName}: {reportedDistance}");
+                }
+
+                #endregion
             }
 
             //foreach (var kv in _activeModels)
@@ -130,7 +144,6 @@ namespace YOLOQuestUnity.Display
             //            Destroy(obj.Value);
             //        }
             //        ModelCount -= kv.Value.Count;
-            //        _activeModels[kv.Key] = new Dictionary<int, GameObject>();
             //        continue;
             //    }
 
@@ -196,8 +209,11 @@ namespace YOLOQuestUnity.Display
                 // Euclidian distance?
 
                 var distance = Vector3.Distance(spawnPosition, model.transform.position);
+                Debug.Log("Distance: " + distance);
+                Debug.Log("Distance id: " + id);
                 if (distance < DistanceThreshold)
                 {
+                    Debug.Log("Is Duplicate");
                     return true;
                 }
             }
@@ -222,8 +238,8 @@ namespace YOLOQuestUnity.Display
             {
                 try
                 {
-                return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
-            }
+                    return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
+                }
                 catch
                 {
                     position = ImageToWorldCoordinates(obj.BoundingBox.center);

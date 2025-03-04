@@ -1,12 +1,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using Unity.Profiling.LowLevel.Unsafe;
 using Unity.Sentis;
 using UnityEngine;
 using YOLOQuestUnity.Inference;
 using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
 using YOLOQuestUnity.Display;
+using UnityEngine.SceneManagement;
 
 namespace YOLOQuestUnity.YOLO
 {
@@ -30,8 +33,8 @@ namespace YOLOQuestUnity.YOLO
         [Tooltip("The base camera for scene analysis")]
         [SerializeField] private Camera _referenceCamera;
         [Tooltip("The ObjectDisplayManager that will handle the spawning of digital double models.")]
-        [SerializeField] private ObjectDisplayManager _displayManager;
-        
+        [SerializeField] private ObjectDisplayManager _displayManager;      
+
         public Camera ReferenceCamera { get => _referenceCamera; private set => _referenceCamera = value; }
 
         #endregion
@@ -56,16 +59,55 @@ namespace YOLOQuestUnity.YOLO
 
         #endregion
 
+        #region Evaluation
+
+
+        private long _YOLOInferenceStartTime;
+        private long _CaptureTime;
+        private long _DetectedTime;
+        private readonly List<long> _YOLOInferenceTimes = new();
+        private readonly List<long> _CaptureTimes = new();
+        private readonly List<long> _DetectedTimes = new();
+
+        private long GetMillisecondsElapsed(long start)
+        {
+            return ((ProfilerUnsafeUtility.Timestamp - start) * ProfilerUnsafeUtility.TimestampToNanosecondsConversionRatio.Numerator / ProfilerUnsafeUtility.TimestampToNanosecondsConversionRatio.Denominator) / 1000000;
+        }
+
+        void OnApplicationQuit()
+        {
+            if (_YOLOInferenceTimes.Count == 0) return;
+            using (StreamWriter file = File.AppendText(Path.Combine(Application.persistentDataPath, $"CustomProfileData_{((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds()}.csv")))
+            {
+                for (int i = 0; i < _YOLOInferenceTimes.Count; i++)
+                {
+                    file.WriteLine($"{_YOLOInferenceTimes[i]},{_CaptureTimes[i]},{_DetectedTimes[i]}");
+                }
+            }
+            _YOLOInferenceTimes.Clear();
+            _CaptureTimes.Clear();
+            _DetectedTimes.Clear();
+        }
+
+        private void OnApplicationPause()
+        {
+            OnApplicationQuit();
+        }
+
+        #endregion
+
         void Start()
         {
             _classes = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<int, string>>>(_classJson.text)["class"];
             _inferenceHandler = new YOLOInferenceHandler(_model, ref InputSize);
             if (_layersPerFrame <= 0) _layersPerFrame = 1;
             _analysisCamera = GetComponent<Camera>();
+
+            _YOLOCamera = GameObject.FindGameObjectWithTag("VideoFeedManager").GetComponent<VideoFeedManager>();
         }
 
         void Update()
-        {            
+        {
             if (_inferenceHandler == null) return;
 
             if (_YOLOCamera == null) return;
@@ -76,7 +118,26 @@ namespace YOLOQuestUnity.YOLO
             {
                 if (!inferencePending)
                 {
-                    if ((_inputTexture = _YOLOCamera.GetTexture()) == null) return;
+                    #region Evaluation
+
+                    int sceneToLoad;
+                    if ((sceneToLoad = SceneController.NextScene(1)) != -1)
+                    {
+                        Debug.Log("Loading scene " + sceneToLoad);
+                        _inferenceHandler.OnDestroy();
+                        SceneManager.LoadScene(sceneToLoad);
+                        return;
+                    }
+                    
+                    #endregion
+
+                    _CaptureTime = ProfilerUnsafeUtility.Timestamp;
+                    if ((_inputTexture = _YOLOCamera.GetTexture()) == null)
+                    {
+                        Debug.LogWarning("No texture available");
+                        return;
+                    }
+                    _YOLOInferenceStartTime = ProfilerUnsafeUtility.Timestamp;
                     splitInferenceEnumerator = _inferenceHandler.RunWithLayerControl(_inputTexture);
                     inferencePending = true;
                     _analysisCamera.CopyFrom(ReferenceCamera);
@@ -85,6 +146,10 @@ namespace YOLOQuestUnity.YOLO
                 {
                     int it = 0;
                     while (splitInferenceEnumerator.MoveNext()) if (++it % _layersPerFrame == 0) return;
+
+                    _DetectedTime = ProfilerUnsafeUtility.Timestamp;
+                    long yoloInferenceTime = GetMillisecondsElapsed(_YOLOInferenceStartTime);
+
 
                     readingBack = true;
                     analysisResultTensor = _inferenceHandler.PeekOutput() as Tensor<float>;
@@ -101,6 +166,24 @@ namespace YOLOQuestUnity.YOLO
                         analysisResultTensor = null;
 
                         _displayManager.DisplayModels(detectedObjects, _analysisCamera);
+
+                        long detectedToDisplayTime = GetMillisecondsElapsed(_DetectedTime);
+                        long captureToDisplayTime = GetMillisecondsElapsed(_CaptureTime);
+
+                        Debug.Log("Time to run YOLO inference: " + yoloInferenceTime + "ms");
+                        Debug.Log("Time from detection to display: " + detectedToDisplayTime + "ms");
+                        Debug.Log("Time from capture to display: " + captureToDisplayTime + "ms");
+
+                        if (_YOLOInferenceTimes.Count == 100000)
+                        {
+                            _YOLOInferenceTimes.RemoveAt(0);
+                            _DetectedTimes.RemoveAt(0);
+                            _CaptureTimes.RemoveAt(0);
+                        }
+
+                        _YOLOInferenceTimes.Add(yoloInferenceTime);
+                        _DetectedTimes.Add(detectedToDisplayTime);
+                        _CaptureTimes.Add(captureToDisplayTime);
                     });
                 }
             }
@@ -112,10 +195,6 @@ namespace YOLOQuestUnity.YOLO
                 _inferenceHandler.DisposeTensors();
                 inferencePending = false;
             }
-
-            objects.Sort((x, y) => y.Confidence.CompareTo(x.Confidence));
-
-            return objects;
         }
     }
 }
