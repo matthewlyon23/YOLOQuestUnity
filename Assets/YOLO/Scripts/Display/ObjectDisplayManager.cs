@@ -117,7 +117,7 @@ namespace YOLOQuestUnity.Display
                 {
                     if (MovingObjects)
                     {
-                        var model = modelList[objectCounts[obj.CocoClass]];
+                        var model = modelList[objectCounts[obj.CocoClass]-1];
                         UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5f);
                     }
                 }
@@ -186,6 +186,8 @@ namespace YOLOQuestUnity.Display
                 _ => 1f
             };
             
+            if (float.IsInfinity(scaleFactor)) scaleFactor = 1f;
+            Debug.Log($"Scale Factor for {obj.CocoName}: {scaleFactor}");
             Vector3 scaleVector = new(scaleFactor, scaleFactor, scaleFactor);
             model.transform.localScale = Vector3.Scale(model.transform.localScale, scaleVector);
         }
@@ -211,7 +213,8 @@ namespace YOLOQuestUnity.Display
                 var distance = Vector3.Distance(spawnPosition, model.transform.position);
                 Debug.Log("Distance: " + distance);
                 Debug.Log("Distance id: " + id);
-                if (distance < DistanceThreshold)
+                var boundingBoxR = Vector3.Distance(model.GetComponentInChildren<MeshRenderer>().bounds.max, model.GetComponentInChildren<MeshRenderer>().bounds.center);
+                if (distance < 2f*boundingBoxR)
                 {
                     Debug.Log("Is Duplicate");
                     return true;
@@ -279,16 +282,20 @@ namespace YOLOQuestUnity.Display
         {
             Vector2[] screenPoints = bounds3D.Select(boundPoint => (Vector2)_camera.WorldToScreenPoint(boundPoint)).ToArray();
 
-            Vector2 maxPoint = screenPoints[0];
-            Vector2 minPoint = screenPoints[0];
+            float maxX = screenPoints[0].x;
+            float minX = screenPoints[0].x;
+            float maxY = screenPoints[0].y;
+            float minY = screenPoints[0].y;
 
             foreach (Vector3 screenPoint in screenPoints)
             {
-                if (screenPoint.x >= maxPoint.x && screenPoint.y >= maxPoint.y) maxPoint = screenPoint;
-                if (screenPoint.x <= minPoint.x && screenPoint.y <= minPoint.y) minPoint = screenPoint;
+                if (screenPoint.x > maxX) maxX = screenPoint.x;
+                if (screenPoint.x < minX) minX = screenPoint.x;
+                if (screenPoint.y > maxY) maxY = screenPoint.y;
+                if (screenPoint.y < minY) minY = screenPoint.y;
             }
 
-            return (minPoint, maxPoint);
+            return (new Vector2(minX, minY), new Vector2(maxX, maxY));
         }
 
         private Vector3[] GetModel3DBounds(GameObject model)
