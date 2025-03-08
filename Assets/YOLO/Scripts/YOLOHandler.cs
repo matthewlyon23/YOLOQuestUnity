@@ -74,10 +74,10 @@ namespace YOLOQuestUnity.YOLO
             return ((ProfilerUnsafeUtility.Timestamp - start) * ProfilerUnsafeUtility.TimestampToNanosecondsConversionRatio.Numerator / ProfilerUnsafeUtility.TimestampToNanosecondsConversionRatio.Denominator) / 1000000;
         }
 
-        void OnApplicationQuit()
+        void SaveData(int scene)
         {
             if (_YOLOInferenceTimes.Count == 0) return;
-            using (StreamWriter file = File.AppendText(Path.Combine(Application.persistentDataPath, $"CustomProfileData_{((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds()}.csv")))
+            using (StreamWriter file = File.AppendText(Path.Combine(Application.persistentDataPath, $"CustomProfileData_{PlayerPrefs.GetInt("run", 0)}_{scene}.csv")))
             {
                 for (int i = 0; i < _YOLOInferenceTimes.Count; i++)
                 {
@@ -87,11 +87,6 @@ namespace YOLOQuestUnity.YOLO
             _YOLOInferenceTimes.Clear();
             _CaptureTimes.Clear();
             _DetectedTimes.Clear();
-        }
-
-        private void OnApplicationPause()
-        {
-            OnApplicationQuit();
         }
 
         #endregion
@@ -125,6 +120,7 @@ namespace YOLOQuestUnity.YOLO
                     {
                         Debug.Log("Loading scene " + sceneToLoad);
                         _inferenceHandler.OnDestroy();
+                        SaveData(SceneManager.GetActiveScene().buildIndex);
                         SceneManager.LoadScene(sceneToLoad);
                         return;
                     }
