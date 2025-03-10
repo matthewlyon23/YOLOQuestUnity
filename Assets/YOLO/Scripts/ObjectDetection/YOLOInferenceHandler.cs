@@ -10,14 +10,14 @@ namespace YOLOQuestUnity.ObjectDetection
         private readonly TextureAnalyser _textureAnalyser;
         private readonly int _size;
 
-        public YOLOInferenceHandler(ModelAsset modelAsset, ref int size)
+        public YOLOInferenceHandler(ModelAsset modelAsset, ref int size, bool addClassificationHead)
         {
             _model = ModelLoader.Load(modelAsset);
 
             if (_model.inputs[0].shape.Get(2) != -1) size = _model.inputs[0].shape.Get(2);
             _size = size;
 
-            if (modelAsset.name.Contains("yolo11"))
+            if (addClassificationHead)
             {
                 var graph = new FunctionalGraph();
 

@@ -17,6 +17,8 @@ namespace YOLOQuestUnity.YOLO
 
         [Tooltip("The YOLO model to run.")]
         [SerializeField] private ModelAsset _model;
+        [Tooltip("Add a classification head to the model to select the most likely class for each detection.")]
+        [SerializeField] private bool _addClassificationHead = false;
         [Tooltip("The size of the input image to the model. This will be overwritten if the model has a fixed input size.")]
         [SerializeField] private int InputSize = 640;
         [Tooltip("The number of model layers to run per frame. Increasing this value will decrease performance.")]
@@ -59,7 +61,7 @@ namespace YOLOQuestUnity.YOLO
         void Start()
         {
             _classes = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<int, string>>>(_classJson.text)["class"];
-            _inferenceHandler = new YOLOInferenceHandler(_model, ref InputSize);
+            _inferenceHandler = new YOLOInferenceHandler(_model, ref InputSize, _addClassificationHead);
             if (_layersPerFrame <= 0) _layersPerFrame = 1;
             _analysisCamera = GetComponent<Camera>();
         }
@@ -112,10 +114,6 @@ namespace YOLOQuestUnity.YOLO
                 _inferenceHandler.DisposeTensors();
                 inferencePending = false;
             }
-
-            objects.Sort((x, y) => y.Confidence.CompareTo(x.Confidence));
-
-            return objects;
         }
     }
 }
