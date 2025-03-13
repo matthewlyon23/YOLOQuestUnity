@@ -28,7 +28,7 @@ namespace YOLOQuestUnity.YOLO
         [Tooltip("A JSON containing a mapping of class numbers to class names")]
         [SerializeField] private TextAsset _classJson;
         [Tooltip("The VideoFeedManager to analyse frames from.")]
-        public VideoFeedManager _YOLOCamera;
+        public VideoFeedManager YOLOCamera;
         [Tooltip("The base camera for scene analysis")]
         [SerializeField] private Camera _referenceCamera;
         [Tooltip("The ObjectDisplayManager that will handle the spawning of digital double models.")]
@@ -70,7 +70,7 @@ namespace YOLOQuestUnity.YOLO
         {            
             if (_inferenceHandler == null) return;
 
-            if (_YOLOCamera == null) return;
+            if (YOLOCamera == null) return;
 
             if (readingBack) return;
 
@@ -78,7 +78,7 @@ namespace YOLOQuestUnity.YOLO
             {
                 if (!inferencePending)
                 {
-                    if ((_inputTexture = _YOLOCamera.GetTexture()) == null) return;
+                    if ((_inputTexture = YOLOCamera.GetTexture()) == null) return;
                     splitInferenceEnumerator = _inferenceHandler.RunWithLayerControl(_inputTexture);
                     inferencePending = true;
                     _analysisCamera.CopyFrom(ReferenceCamera);
