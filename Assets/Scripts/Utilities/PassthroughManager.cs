@@ -11,6 +11,11 @@ namespace YOLOQuestUnity.Utilities
 
         public UnityEvent ScreenCaptureStart = new();
 
+        public PassthroughManager(QuestScreenCaptureTextureManager screenCaptureTextureManager)
+        {
+            _screenCaptureTextureManager = screenCaptureTextureManager;
+        }
+
         private void Start()
         {
             _screenCaptureTextureManager.OnNewFrame.AddListener(OnNewFrame);

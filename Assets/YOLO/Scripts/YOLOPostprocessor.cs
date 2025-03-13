@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using YOLOQuestUnity.ObjectDetection;
 
-public class YOLOPostProcessor
+public static class YOLOPostProcessor
 {
     public static List<DetectedObject> PostProcess(Tensor<float> result, Texture2D inputTexture, int inputSize, Dictionary<int, string> classes, float confidenceThreshold)
     {
