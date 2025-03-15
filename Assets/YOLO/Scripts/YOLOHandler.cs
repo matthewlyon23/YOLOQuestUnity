@@ -10,6 +10,7 @@ using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
 using YOLOQuestUnity.Display;
 using UnityEngine.SceneManagement;
+using System.Linq;
 
 namespace YOLOQuestUnity.YOLO
 {
@@ -68,6 +69,7 @@ namespace YOLOQuestUnity.YOLO
         private readonly List<long> _YOLOInferenceTimes = new();
         private readonly List<long> _CaptureTimes = new();
         private readonly List<long> _DetectedTimes = new();
+        private readonly List<int> _FPS = new();
 
         private long GetMillisecondsElapsed(long start)
         {
@@ -81,12 +83,13 @@ namespace YOLOQuestUnity.YOLO
             {
                 for (int i = 0; i < _YOLOInferenceTimes.Count; i++)
                 {
-                    file.WriteLine($"{_YOLOInferenceTimes[i]},{_CaptureTimes[i]},{_DetectedTimes[i]}");
+                    file.WriteLine($"{_YOLOInferenceTimes[i]},{_CaptureTimes[i]},{_DetectedTimes[i]},{(int)_FPS.Average()},{string.Join(',', _FPS.Cast<string>())}");
                 }
             }
             _YOLOInferenceTimes.Clear();
             _CaptureTimes.Clear();
             _DetectedTimes.Clear();
+            _FPS.Clear();
         }
 
         #endregion
@@ -103,6 +106,8 @@ namespace YOLOQuestUnity.YOLO
 
         void Update()
         {
+            if (_FPS.Count < 1000000) _FPS.Add((int)(1f / Time.unscaledDeltaTime));
+
             if (_inferenceHandler == null) return;
 
             if (_YOLOCamera == null) return;
