@@ -8,6 +8,10 @@ using System.Collections;
 
 public class PiCameraManager : IPCameraManager
 {
+    public PiCameraManager(string imageUrl, bool downloadAsImage, string username, string password) : base(imageUrl, downloadAsImage, username, password)
+    {
+    }
+
     new protected void Update()
     {
         if (!_gettingFrame)
