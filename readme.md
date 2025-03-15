@@ -19,6 +19,16 @@ The project features several components which provide functionality for a number
 - An object display manager which handles the spawning of models associated objects, defined by a mapping available in the Unity inspector.
 - A YOLO handler which runs inference, manages object display and manages post processing for YOLO11 models.
 
+### Requirements
+
+- [Git LFS](https://git-lfs.com/)
+- [Unity 6000.0.20f1](https://unity.com/releases/editor/whats-new/6000.0.20#installs) with Android Build Support
+  - Note: Whilst it is possible to open the project in Unity Editor Version 6000.0.20f1 or *later*, it is not recommended as this can cause bugs. Proceed at your own risk.
+- Windows
+- Packages:
+  - Listed in [Packages/manifest.json](Packages/manifest.json)
+  - Necessary packages will be installed automatically by the Unity Editor
+
 ## Installation
 
 ### Full Project
