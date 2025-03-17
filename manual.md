@@ -1,4 +1,6 @@
-## Manual
+# Manual
+
+## Configuration Options
 
 ### YOLOHandler
 
@@ -21,6 +23,8 @@ This table outlines the configurable options available from the Unity inspector.
 
 The `IPCameraManager` can be used to connect to an IP Camera stream over IP, given the HTTP URL, including a specified port number if a non-standard HTTP port is used. Currently, only HTTP is supported.
 
+This table outlines the configurable options available from the Unity inspector.
+
 | Field | Type | Description | Example |
 | --- | --- | --- | --- |
 |Image Url|`string`|The URL of the IP Camera's static image feed.|`http://ip:port/shot.jpg`|
@@ -28,9 +32,15 @@ The `IPCameraManager` can be used to connect to an IP Camera stream over IP, giv
 |Username|`string`|The username to use if the IP Camera requires Basic HTTP authentication.|`default`|
 |Password|`string`|The password to use if the IP Camera requires Basic HTTP authentication.|`password`|
 
-### PassthroughManager
+### PiCameraManager
+
+The `PiCameraManager` is a built-in subclass of the `IPCameraManager` which provides specific functionality for a horizontally mounted [Pi Camera Module 3](https://www.raspberrypi.com/products/camera-module-3/), including rotating the image from the camera to match the orientation of the corresponding virtual camera.
+
+#### PassthroughManager
 
 The `PassthroughManager` wraps an existing `QuestScreenCaptureTextureManager` object from the [trev3d QuestDisplayAccessDemo GitHub repository](https://github.com/trev3d/QuestDisplayAccessDemo).
+
+This table outlines the configurable options available from the Unity inspector.
 
 | Field | Type | Description | Example |
 | --- | --- | --- | --- |
