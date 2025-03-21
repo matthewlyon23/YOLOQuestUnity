@@ -20,7 +20,7 @@ namespace YOLOQuestUnity.Display
         [Tooltip("The maximum number of models which can spawn at once.")]
         [SerializeField] private int _maxModelCount = 10;
         [Tooltip("The minimum distance from an existing model at which a model of the same class can spawn.")]
-        [SerializeField] private float _distanceThreshold = 0.5f;
+        [SerializeField] private float _distanceThreshold = 1f;
 
         [Tooltip("The names of the COCO classes to detect and their associated models.")]
         [SerializeField, SerializedDictionary("Coco Class", "3D Model")]
@@ -228,7 +228,7 @@ namespace YOLOQuestUnity.Display
                 try
                 {
                 return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
-            }
+                }
                 catch
                 {
                     position = ImageToWorldCoordinates(obj.BoundingBox.center);
