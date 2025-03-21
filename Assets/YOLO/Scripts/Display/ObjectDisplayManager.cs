@@ -201,7 +201,7 @@ namespace YOLOQuestUnity.Display
                 Debug.Log("Distance: " + distance);
                 Debug.Log("Distance id: " + id);
                 var boundingBoxR = Vector3.Distance(model.GetComponentInChildren<MeshRenderer>().bounds.max, model.GetComponentInChildren<MeshRenderer>().bounds.center);
-                if (distance < 2f*boundingBoxR)
+                if (distance < DistanceThreshold*boundingBoxR)
                 {
                     return true;
                 }
