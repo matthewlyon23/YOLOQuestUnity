@@ -8,22 +8,25 @@ using UnityEngine;
 using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
 
-namespace YOLOQuestUnity.YOLO.Display
+namespace YOLOQuestUnity.Display
 {
     public class ObjectDisplayManager : MonoBehaviour
     {
-
         #region Model Management
 
         private Dictionary<int, Dictionary<int, GameObject>> _activeModels;
 
         private int _modelCount;
-        [SerializeField] private int _maxModelCount;
-        [SerializeField] private float _distanceThreshold = 0.5f;
+        [Tooltip("The maximum number of models which can spawn at once.")]
+        [SerializeField] private int _maxModelCount = 10;
+        [Tooltip("The minimum distance from an existing model at which a model of the same class can spawn.")]
+        [SerializeField] private float _distanceThreshold = 1f;
 
+        [Tooltip("The names of the COCO classes to detect and their associated models.")]
         [SerializeField, SerializedDictionary("Coco Class", "3D Model")]
         private SerializedDictionary<string, GameObject> _cocoModels;
 
+        [Tooltip("Use existing models when a new object is detected.")]
         [SerializeField] private bool _movingObjects;
         public bool MovingObjects { get => _movingObjects; set => _movingObjects = value; }
 
@@ -31,13 +34,14 @@ namespace YOLOQuestUnity.YOLO.Display
         public int MaxModelCount { get { return _maxModelCount; } private set { _maxModelCount = value; } }
         public float DistanceThreshold { get { return _distanceThreshold; } private set { _distanceThreshold = value; } }
 
+        [Tooltip("The scaling method to use:\nMIN: Use the minimum of the x and y scale change.\nMAX: Use the maximum of the x and y scale change.\nAVERAGE: Use the average of both the x and y scale change.\nWIDTH: Use the x scale change.\nHEIGHT: Use the y scale change.")]
         [SerializeField] private ScaleType _scaleType = ScaleType.AVERAGE;
-
 
         #endregion
 
         #region External Data Management
 
+        [Tooltip("The VideoFeedManager used to capture input frames.")]
         [SerializeField] private VideoFeedManager _videoFeedManager;
 
         private Camera _camera;
@@ -74,7 +78,7 @@ namespace YOLOQuestUnity.YOLO.Display
 
             foreach (var obj in objects)
             {
-                if (objectCounts.GetValueOrDefault(obj.CocoClass) == 2) continue;
+                if (objectCounts.GetValueOrDefault(obj.CocoClass) == 3) continue;
 
                 if (!_cocoModels.ContainsKey(obj.CocoName) || _cocoModels[obj.CocoName] == null)
                 {
@@ -100,29 +104,18 @@ namespace YOLOQuestUnity.YOLO.Display
                     objectCounts[obj.CocoClass]++;
                 }
 
-                if (objectCounts[obj.CocoClass] > modelList.Count && ModelCount != MaxModelCount)
+                if ((!MovingObjects || objectCounts[obj.CocoClass] > modelList.Count) && ModelCount != MaxModelCount)
                 {
-                    if (_cocoModels.ContainsKey(obj.CocoName) && _cocoModels[obj.CocoName] != null)
-                    {
-
-                        Debug.Log("Spawning new object");
-                        var model = Instantiate(_cocoModels[obj.CocoName]);
-                        modelList.Add(objectCounts[obj.CocoClass], model);
-                        Debug.Log($"Hit Confidence: {hitConfidence}");
-                        UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5f);
-                        ModelCount++;
-                    }
-                    else
-                    {
-                        Debug.Log("Error: No model provided for the detected class.");
-                    }
+                    var model = Instantiate(_cocoModels[obj.CocoName]);
+                    modelList.Add(modelList.Count, model);
+                    UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5f);
+                    ModelCount++;
                 }
                 else if (objectCounts[obj.CocoClass] <= modelList.Count)
                 {
                     if (MovingObjects)
                     {
-                        Debug.Log("Using existing object");
-                        var model = modelList[objectCounts[obj.CocoClass]];
+                        var model = modelList[objectCounts[obj.CocoClass]-1];
                         UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5f);
                     }
                 }
@@ -180,6 +173,8 @@ namespace YOLOQuestUnity.YOLO.Display
                 _ => 1f
             };
             
+            if (float.IsInfinity(scaleFactor)) scaleFactor = 1f;
+            Debug.Log($"Scale Factor for {obj.CocoName}: {scaleFactor}");
             Vector3 scaleVector = new(scaleFactor, scaleFactor, scaleFactor);
             model.transform.localScale = Vector3.Scale(model.transform.localScale, scaleVector);
         }
@@ -203,7 +198,10 @@ namespace YOLOQuestUnity.YOLO.Display
                 // Euclidian distance?
 
                 var distance = Vector3.Distance(spawnPosition, model.transform.position);
-                if (distance < DistanceThreshold)
+                Debug.Log("Distance: " + distance);
+                Debug.Log("Distance id: " + id);
+                var boundingBoxR = Vector3.Distance(model.GetComponentInChildren<MeshRenderer>().bounds.max, model.GetComponentInChildren<MeshRenderer>().bounds.center);
+                if (distance < DistanceThreshold*boundingBoxR)
                 {
                     return true;
                 }
@@ -227,16 +225,14 @@ namespace YOLOQuestUnity.YOLO.Display
 
             if (_environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
             {
+                try
+                {
                 return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
-                
-                //Preserved for debugging
-                //Ray ray = _camera.ScreenPointToRay(ImageToScreenCoordinates(obj.BoundingBox.center));
-                //if (_environmentRaycastManager.Raycast(ray, out EnvironmentRaycastHit hit))
-                //{
-                //    position = hit.point;
-                //    rotation = Quaternion.LookRotation(hit.normal);
-                //    hitConfidence = hit.normalConfidence;
-                //}
+                }
+                catch
+                {
+                    position = ImageToWorldCoordinates(obj.BoundingBox.center);
+                }
             }
             else position = ImageToWorldCoordinates(obj.BoundingBox.center);
 
@@ -272,16 +268,20 @@ namespace YOLOQuestUnity.YOLO.Display
         {
             Vector2[] screenPoints = bounds3D.Select(boundPoint => (Vector2)_camera.WorldToScreenPoint(boundPoint)).ToArray();
 
-            Vector2 maxPoint = screenPoints[0];
-            Vector2 minPoint = screenPoints[0];
+            float maxX = screenPoints[0].x;
+            float minX = screenPoints[0].x;
+            float maxY = screenPoints[0].y;
+            float minY = screenPoints[0].y;
 
             foreach (Vector3 screenPoint in screenPoints)
             {
-                if (screenPoint.x >= maxPoint.x && screenPoint.y >= maxPoint.y) maxPoint = screenPoint;
-                if (screenPoint.x <= minPoint.x && screenPoint.y <= minPoint.y) minPoint = screenPoint;
+                if (screenPoint.x > maxX) maxX = screenPoint.x;
+                if (screenPoint.x < minX) minX = screenPoint.x;
+                if (screenPoint.y > maxY) maxY = screenPoint.y;
+                if (screenPoint.y < minY) minY = screenPoint.y;
             }
 
-            return (minPoint, maxPoint);
+            return (new Vector2(minX, minY), new Vector2(maxX, maxY));
         }
 
         private Vector3[] GetModel3DBounds(GameObject model)
@@ -307,31 +307,29 @@ namespace YOLOQuestUnity.YOLO.Display
             if (spreadWidth % 2 == 0) spreadWidth += 1;
             if (spreadHeight % 2 == 0) spreadHeight += 1;
 
-            Vector2[] rayPoints = new Vector2[9];
-            rayPoints[4] = ImageToScreenCoordinates(obj.BoundingBox.center);
+            Vector2[,] rayPoints = new Vector2[spreadHeight, spreadWidth];
+            rayPoints[spreadHeight/2, spreadWidth/2] = ImageToScreenCoordinates(obj.BoundingBox.center);
 
             float yDist = 0.01f * _camera.pixelHeight;
             float xDist = 0.01f * _camera.pixelWidth;
 
-            float currentY = rayPoints[4].y - yDist;
-            float currentX = rayPoints[4].x - xDist;
+            float currentY = rayPoints[spreadHeight/2, spreadWidth/2].y - yDist;
+            float currentX = rayPoints[spreadHeight/2, spreadWidth/2].x - xDist;
 
             for (int i = 0; i < spreadHeight; i++)
             {
                 for (int j = 0; j < spreadWidth; j++)
                 {
-                    if (i == Math.Floor((float)spreadHeight / 2) && j == Math.Floor((float)spreadWidth / 2)) continue;
-                    rayPoints[i * spreadWidth + j] = ImageToScreenCoordinates(new Vector2(currentX, currentY));
+                    if (i == spreadHeight/2 && j == spreadWidth/2) continue;
+                    rayPoints[i, j] = ImageToScreenCoordinates(new Vector2(currentX, currentY));
                     currentX += xDist;
                 }
 
                 currentY += yDist;
-                currentX = rayPoints[4].x - xDist;
+                currentX = rayPoints[spreadHeight / 2, spreadWidth / 2].x - xDist;
             }
 
-            // Could also filter points by closeness
-
-            Ray[] rays = rayPoints.Select(point => _camera.ScreenPointToRay(point)).ToArray();
+            Ray[] rays = rayPoints.Cast<Vector2>().Select(point => _camera.ScreenPointToRay(point)).ToArray();
 
             EnvironmentRaycastHit[] hits = rays.Select(ray =>
             {
@@ -387,6 +385,8 @@ namespace YOLOQuestUnity.YOLO.Display
             currentRoom = room;
         }
 
+        #endregion
+
         private enum ScaleType
         {
             WIDTH,
@@ -395,7 +395,7 @@ namespace YOLOQuestUnity.YOLO.Display
             MIN,
             MAX
         }
-
-        #endregion
     }
+
+    
 }

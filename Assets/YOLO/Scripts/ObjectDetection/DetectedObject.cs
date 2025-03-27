@@ -16,7 +16,5 @@ namespace YOLOQuestUnity.ObjectDetection
             Confidence = confidence;
             BoundingBox = new Rect((int)centreX-(width/2), (int)centreY-(height/2), (int)width, (int)height);
         }
-
-        
     }
 }

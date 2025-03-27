@@ -11,14 +11,22 @@ namespace YOLOQuestUnity.Utilities
 
         [SerializeField] protected string _imageUrl = "http://ip:port/shot.jpg";
         [SerializeField] protected bool _downloadAsImage = true;
-        [SerializeField] protected string username;
-        [SerializeField] protected string password;
+        [SerializeField] protected string _username;
+        [SerializeField] protected string _password;
 
         protected UnityWebRequest _webRequest;
         protected Texture2D _currentTexture;
 
 
         protected bool _gettingFrame = false;
+
+        public IPCameraManager(string imageUrl, bool downloadAsImage, string username, string password)
+        {
+            _imageUrl = imageUrl;
+            _downloadAsImage = downloadAsImage;
+            _username = username;
+            _password = password;
+        }
 
         protected void Update()
         {
@@ -33,7 +41,7 @@ namespace YOLOQuestUnity.Utilities
         {
             _webRequest = UnityWebRequestTexture.GetTexture(_imageUrl);
 
-            var auth = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
+            var auth = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_username}:{_password}"));
             _webRequest.SetRequestHeader("Authorization", auth);
             _webRequest.certificateHandler = new ForceCertificate();
 

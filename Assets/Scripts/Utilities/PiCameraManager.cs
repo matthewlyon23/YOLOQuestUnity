@@ -8,6 +8,10 @@ using System.Collections;
 
 public class PiCameraManager : IPCameraManager
 {
+    public PiCameraManager(string imageUrl, bool downloadAsImage, string username, string password) : base(imageUrl, downloadAsImage, username, password)
+    {
+    }
+
     new protected void Update()
     {
         if (!_gettingFrame)
@@ -21,7 +25,7 @@ public class PiCameraManager : IPCameraManager
     {
         _webRequest = UnityWebRequestTexture.GetTexture(_imageUrl);
 
-        var auth = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
+        var auth = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_username}:{_password}"));
         _webRequest.SetRequestHeader("Authorization", auth);
         _webRequest.certificateHandler = new ForceCertificate();
         yield return _webRequest.SendWebRequest();

@@ -11,7 +11,6 @@ public class CameraSetupManager : MonoBehaviour
         }
     }
 
-
     private void EnablePassthrough(Camera camera)
     {
         camera.clearFlags = CameraClearFlags.SolidColor;

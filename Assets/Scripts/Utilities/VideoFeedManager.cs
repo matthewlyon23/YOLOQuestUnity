@@ -3,7 +3,6 @@ using UnityEngine.Events;
 
 namespace YOLOQuestUnity.Utilities
 {
-
     public abstract class VideoFeedManager : MonoBehaviour
     {
         public UnityEvent NewFrame { get; } = new UnityEvent();
@@ -11,13 +10,12 @@ namespace YOLOQuestUnity.Utilities
         public abstract Texture2D GetTexture();
 
         public abstract FeedDimensions GetFeedDimensions();
-
     }
 
     public class FeedDimensions
     {
-        private int _width;
-        private int _height;
+        private readonly int _width;
+        private readonly int _height;
 
         public int Width { get => _width; }
         public int Height { get => _height; }
@@ -27,7 +25,6 @@ namespace YOLOQuestUnity.Utilities
             _width = width;
             _height = height;
         }
-
     }
 
 }
