@@ -1102,7 +1102,7 @@ MonoBehaviour:
   _layersPerFrame: 10
   _confidenceThreshold: 0.5
   _classJson: {fileID: 4900000, guid: cdb05da3b5395d7439c72325999baca2, type: 3}
-  _YOLOCamera: {fileID: 913416983}
+  YOLOCamera: {fileID: 913416983}
   _referenceCamera: {fileID: 2011555088}
   _displayManager: {fileID: 1951288686}
 --- !u!4 &1703198767
@@ -1417,8 +1417,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _imageUrl: http://192.168.8.100:5000/photo_feed
   _downloadAsImage: 1
-  username: 
-  password: 
+  _username: 
+  _password: 
 --- !u!1001 &3001774293689589082
 PrefabInstance:
   m_ObjectHideFlags: 0
