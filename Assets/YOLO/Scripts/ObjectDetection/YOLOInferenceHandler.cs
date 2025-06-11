@@ -12,8 +12,8 @@ namespace YOLOQuestUnity.ObjectDetection
         private readonly TextureAnalyser _textureAnalyser;
         private readonly int _size;
 
-        private readonly float _iouThreshold;
-        private readonly float _scoreThreshold;
+        private readonly float _iouThreshold = 0.5f;
+        private readonly float _scoreThreshold = 0.5f;
 
         public YOLOInferenceHandler(ModelAsset modelAsset, ref int size, bool addClassificationHead)
         {
@@ -34,6 +34,9 @@ namespace YOLOQuestUnity.ObjectDetection
 
             if (_model.inputs[0].shape.Get(2) != -1) size = _model.inputs[0].shape.Get(2);
             _size = size;
+
+            _iouThreshold = parameters.IoUThreshold;
+            _scoreThreshold = parameters.ScoreThreshold;
 
             if (parameters.AddClassificationHead) AddClassificationHead();
 
@@ -127,12 +130,16 @@ namespace YOLOQuestUnity.ObjectDetection
         public bool AddClassificationHead;
         public bool QuantizeModel;
         public QuantizationType QuantizationType;
+        public float IoUThreshold;
+        public float ScoreThreshold;
 
-        public ModelCustomizationParameters(bool addClassificationHead = true, bool quantizeModel = false, QuantizationType quantizationType = QuantizationType.Float16)
+        public ModelCustomizationParameters(bool addClassificationHead = true, bool quantizeModel = false, QuantizationType quantizationType = QuantizationType.Float16, float iouThreshold = 0.5f, float scoreThreshold = 0.5f)
         {
             AddClassificationHead = addClassificationHead;
             QuantizeModel = quantizeModel;
             QuantizationType = quantizationType;
+            IoUThreshold = iouThreshold;
+            ScoreThreshold = scoreThreshold;
         }
     }
 }
