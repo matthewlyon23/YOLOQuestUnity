@@ -7,6 +7,8 @@ using System.Linq;
 using UnityEngine;
 using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
+using YOLOQuestUnity.PassthroughCamera;
+using System.Drawing;
 
 namespace YOLOQuestUnity.Display
 {
@@ -227,7 +229,7 @@ namespace YOLOQuestUnity.Display
             {
                 try
                 {
-                return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
+                    return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
                 }
                 catch
                 {
@@ -329,7 +331,13 @@ namespace YOLOQuestUnity.Display
                 currentX = rayPoints[spreadHeight / 2, spreadWidth / 2].x - xDist;
             }
 
-            Ray[] rays = rayPoints.Cast<Vector2>().Select(point => _camera.ScreenPointToRay(point)).ToArray();
+            // Replace _camera.ScreenPointToRay with PassthroughCameraUtils.ScreenPointToRayWorld (unclear whether this is ImageToScreenCoordinates converted or not)
+
+            // Very unhappy with this. Will return to it.
+            Ray[] rays = null;
+            if (_videoFeedManager.GetType() == typeof(WebCamTextureManager)) rays = rayPoints.Cast<Vector2Int>().Select(point => PassthroughCameraUtils.ScreenPointToRayInWorld(((WebCamTextureManager)_videoFeedManager).Eye, point)).ToArray();
+            else rays = rayPoints.Cast<Vector2>().Select(point => _camera.ScreenPointToRay(point)).ToArray();
+            
 
             EnvironmentRaycastHit[] hits = rays.Select(ray =>
             {

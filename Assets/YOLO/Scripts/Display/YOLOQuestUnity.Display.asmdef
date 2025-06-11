@@ -6,7 +6,8 @@
         "meta.xr.mrutilitykit",
         "YOLOQuestUnity.Utilities",
         "YOLOQuestUnity.ObjectDetection",
-        "Unity.XR.Oculus"
+        "Unity.XR.Oculus",
+        "YOLOQuestUnity.PassthroughCamera"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
