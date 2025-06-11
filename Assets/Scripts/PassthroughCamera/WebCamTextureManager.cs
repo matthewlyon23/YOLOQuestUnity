@@ -3,7 +3,6 @@
 using System.Collections;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Android;
 using UnityEngine.Assertions;
 using YOLOQuestUnity.Utilities;
 
@@ -127,8 +126,8 @@ namespace YOLOQuestUnity.PassthroughCamera
 
         public override Texture2D GetTexture()
         {
-            Texture2D texture = null;
-            Graphics.CopyTexture(texture, WebCamTexture);
+            Texture2D texture = new(WebCamTexture.width, WebCamTexture.height, WebCamTexture.graphicsFormat, UnityEngine.Experimental.Rendering.TextureCreationFlags.None);
+            texture.SetPixels(WebCamTexture.GetPixels());
             return texture;
         }
 
