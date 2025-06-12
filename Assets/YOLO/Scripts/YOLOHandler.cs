@@ -7,6 +7,8 @@ using YOLOQuestUnity.Inference;
 using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
 using YOLOQuestUnity.Display;
+using System.Text;
+using System.Linq;
 
 namespace YOLOQuestUnity.YOLO
 {
@@ -68,9 +70,9 @@ namespace YOLOQuestUnity.YOLO
 
         void Update()
         {            
-            if (_inferenceHandler == null) return;
+            if (_inferenceHandler is null) return;
 
-            if (YOLOCamera == null) return;
+            if (YOLOCamera is null) return;
 
             if (readingBack) return;
 
@@ -93,6 +95,9 @@ namespace YOLOQuestUnity.YOLO
                     var analysisResult = analysisResultTensor.ReadbackAndCloneAsync().GetAwaiter();
                     analysisResult.OnCompleted(() =>
                     {
+                        try
+                        {
+
                         analysisResultTensor = analysisResult.GetResult();
                         readingBack = false;
 
@@ -103,6 +108,14 @@ namespace YOLOQuestUnity.YOLO
                         analysisResultTensor = null;
 
                         _displayManager.DisplayModels(detectedObjects, _analysisCamera);
+                        }
+                        catch
+                        {
+                            analysisResultTensor?.Dispose();
+                            analysisResultTensor = null;
+                            inferencePending = false;
+                            _inferenceHandler.DisposeTensors();
+                        }
                     });
                 }
             }

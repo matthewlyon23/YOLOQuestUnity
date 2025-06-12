@@ -15,6 +15,7 @@ namespace YOLOQuestUnity.ObjectDetection
         private readonly float _iouThreshold = 0.5f;
         private readonly float _scoreThreshold = 0.5f;
 
+        [Obsolete("This constructor will be removed in future versions as it is missing new features and limits control. Please use YOLOInferenceHandler(ModelAsset, ref int, YOLOInferenceHandlerParameters) instead.")]
         public YOLOInferenceHandler(ModelAsset modelAsset, ref int size, bool addClassificationHead)
         {
             _model = ModelLoader.Load(modelAsset);
@@ -28,7 +29,7 @@ namespace YOLOQuestUnity.ObjectDetection
             _textureAnalyser = new TextureAnalyser(_worker);
         }
 
-        public YOLOInferenceHandler(ModelAsset modelAsset, ref int size, ModelCustomizationParameters parameters)
+        public YOLOInferenceHandler(ModelAsset modelAsset, ref int size, YOLOInferenceHandlerParameters parameters)
         {
             _model = ModelLoader.Load(modelAsset);
 
@@ -42,7 +43,7 @@ namespace YOLOQuestUnity.ObjectDetection
 
             if (parameters.QuantizeModel) ModelQuantizer.QuantizeWeights(parameters.QuantizationType, ref _model);
 
-            _worker = new Worker(_model, BackendType.GPUCompute);
+            _worker = new Worker(_model, parameters.BackendType);
             _textureAnalyser = new TextureAnalyser(_worker);
         }
 
@@ -105,41 +106,43 @@ namespace YOLOQuestUnity.ObjectDetection
                 -0.5f,  0,      0.5f,   0,
                 0,      -0.5f,  0,      0.5f
             };
-            var centersToCorners = Functional.Constant(new TensorShape(4, 4), centersToCornersData);
-            var slicedClasses = output[.., 4..84, ..];
+            var centersToCorners = Functional.Constant(new TensorShape(4, 4), centersToCornersData); // (4,4)
+            var slicedClasses = output[.., 4..84, ..]; // (1,80,N)
 
-            var argMaxClasses = Functional.ArgMax(slicedClasses, 1, false);
-            var confidences = Functional.Gather(slicedClasses, 1, argMaxClasses.BroadcastTo(new int[] { 1 }).Transpose(1, 2));
-            var slicedPositions = output[.., 0..4, ..];
+            var argMaxClasses = Functional.ArgMax(slicedClasses, 1, false); // (1,N)
+            var confidences = Functional.ReduceMax(slicedClasses, 1); // (1,N)
+            var slicedPositions = output[.., 0..4, ..]; // (1,4,N)
 
-            var boxCorners = Functional.MatMul(slicedPositions, centersToCorners);
-            var indices = Functional.NMS(boxCorners, confidences, _iouThreshold, _scoreThreshold);
+            var boxCorners = Functional.MatMul(slicedPositions[0, .., ..].Transpose(0,1), centersToCorners); // (N,4)
+            var indices = Functional.NMS(boxCorners, confidences[0,..], _iouThreshold, _scoreThreshold); // (N)
 
-            var classIds = Functional.Gather(argMaxClasses, 1, indices).BroadcastTo(new int[] { 1 }).Transpose(1, 2);
-            var scores = Functional.Gather(confidences, 2, indices);
-            var coords = Functional.Gather(slicedPositions, 0, indices.BroadcastTo(new int[] { 4 })).Transpose(1, 2);
+            var classIds = Functional.Gather(argMaxClasses, 1, indices.Unsqueeze(0)).Unsqueeze(1); // (1,1,N)
+            var scores = Functional.Gather(confidences, 1, indices.Unsqueeze(0)).Unsqueeze(1); // (1,1,N)
+            var coords = Functional.IndexSelect(slicedPositions, 2, indices); // (1,4,N)
 
-            var concatenated = Functional.Concat(new FunctionalTensor[] { coords, classIds.Float(), scores }, 1);
+            var concatenated = Functional.Concat(new FunctionalTensor[] { coords, classIds.Float(), scores }, 1); // (1,6,N)
 
             _model = graph.Compile(concatenated);
         }
     }
 
-    public struct ModelCustomizationParameters
+    public struct YOLOInferenceHandlerParameters
     {
         public bool AddClassificationHead;
         public bool QuantizeModel;
         public QuantizationType QuantizationType;
         public float IoUThreshold;
         public float ScoreThreshold;
+        public BackendType BackendType;
 
-        public ModelCustomizationParameters(bool addClassificationHead = true, bool quantizeModel = false, QuantizationType quantizationType = QuantizationType.Float16, float iouThreshold = 0.5f, float scoreThreshold = 0.5f)
+        public YOLOInferenceHandlerParameters(bool addClassificationHead = true, bool quantizeModel = false, QuantizationType quantizationType = QuantizationType.Float16, float iouThreshold = 0.5f, float scoreThreshold = 0.5f, BackendType backendType = BackendType.GPUCompute)
         {
             AddClassificationHead = addClassificationHead;
             QuantizeModel = quantizeModel;
             QuantizationType = quantizationType;
             IoUThreshold = iouThreshold;
             ScoreThreshold = scoreThreshold;
+            BackendType = backendType;
         }
     }
 }

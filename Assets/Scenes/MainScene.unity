@@ -518,6 +518,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 20000012175207052, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
+      propertyPath: m_CullingMask.m_Bits
+      value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 20000012175207052, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
       propertyPath: m_projectionMatrixMode
       value: 1
       objectReference: {fileID: 0}
@@ -1368,7 +1372,7 @@ MonoBehaviour:
       Value: {fileID: 919132149155446097, guid: 6a2300f147ae5734badb83315730b4e1, type: 3}
   _movingObjects: 1
   _scaleType: 2
-  _videoFeedManager: {fileID: 913416983}
+  _videoFeedManager: {fileID: 1246362433}
 --- !u!4 &1951288687
 Transform:
   m_ObjectHideFlags: 0
