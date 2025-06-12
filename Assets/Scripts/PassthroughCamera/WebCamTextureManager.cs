@@ -127,7 +127,8 @@ namespace YOLOQuestUnity.PassthroughCamera
         public override Texture2D GetTexture()
         {
             Texture2D texture = new(WebCamTexture.width, WebCamTexture.height, WebCamTexture.graphicsFormat, UnityEngine.Experimental.Rendering.TextureCreationFlags.None);
-            texture.SetPixels(WebCamTexture.GetPixels());
+            texture.SetPixels32(WebCamTexture.GetPixels32());
+            texture.Apply();
             return texture;
         }
 
