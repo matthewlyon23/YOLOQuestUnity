@@ -15,20 +15,6 @@ namespace YOLOQuestUnity.ObjectDetection
         private readonly float _scoreThreshold = 0.5f;
 
 
-        [Obsolete("This constructor will be removed in future versions as it is missing new features and limits control. Please use YOLOInferenceHandler(ModelAsset, ref int, YOLOInferenceHandlerParameters) instead.")]
-        public YOLOInferenceHandler(YOLOModelAsset modelAsset, ref int size, bool addClassificationHead)
-        {
-            _model = ModelLoader.Load(modelAsset.ModelAsset);
-
-            if (_model.inputs[0].shape.Get(2) != -1) size = _model.inputs[0].shape.Get(2);
-            _size = size;
-
-            if (addClassificationHead) AddClassificationHead();
-
-            _worker = new Worker(_model, BackendType.GPUCompute);
-            _textureAnalyser = new TextureAnalyser(_worker);
-        }
-
         public YOLOInferenceHandler(YOLOModelAsset modelAsset, ref int size, YOLOInferenceHandlerParameters parameters)
         {
             _model = ModelLoader.Load(modelAsset.ModelAsset);
