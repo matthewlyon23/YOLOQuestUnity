@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using Unity.Sentis;
 using UnityEngine;
-using UnityEngine.UIElements;
 using YOLOQuestUnity.Inference;
 
 namespace YOLOQuestUnity.ObjectDetection
@@ -15,10 +14,11 @@ namespace YOLOQuestUnity.ObjectDetection
         private readonly float _iouThreshold = 0.5f;
         private readonly float _scoreThreshold = 0.5f;
 
+
         [Obsolete("This constructor will be removed in future versions as it is missing new features and limits control. Please use YOLOInferenceHandler(ModelAsset, ref int, YOLOInferenceHandlerParameters) instead.")]
-        public YOLOInferenceHandler(ModelAsset modelAsset, ref int size, bool addClassificationHead)
+        public YOLOInferenceHandler(YOLOModelAsset modelAsset, ref int size, bool addClassificationHead)
         {
-            _model = ModelLoader.Load(modelAsset);
+            _model = ModelLoader.Load(modelAsset.ModelAsset);
 
             if (_model.inputs[0].shape.Get(2) != -1) size = _model.inputs[0].shape.Get(2);
             _size = size;
@@ -29,9 +29,9 @@ namespace YOLOQuestUnity.ObjectDetection
             _textureAnalyser = new TextureAnalyser(_worker);
         }
 
-        public YOLOInferenceHandler(ModelAsset modelAsset, ref int size, YOLOInferenceHandlerParameters parameters)
+        public YOLOInferenceHandler(YOLOModelAsset modelAsset, ref int size, YOLOInferenceHandlerParameters parameters)
         {
-            _model = ModelLoader.Load(modelAsset);
+            _model = ModelLoader.Load(modelAsset.ModelAsset);
 
             if (_model.inputs[0].shape.Get(2) != -1) size = _model.inputs[0].shape.Get(2);
             _size = size;
@@ -126,23 +126,64 @@ namespace YOLOQuestUnity.ObjectDetection
         }
     }
 
-    public struct YOLOInferenceHandlerParameters
+    public class YOLOInferenceHandlerParameters
     {
-        public bool AddClassificationHead;
-        public bool QuantizeModel;
-        public QuantizationType QuantizationType;
+        public bool AddClassificationHead { get; private set; }
+
+        public bool QuantizeModel { get; private set; }
+        public QuantizationType QuantizationType { get; private set; } = QuantizationType.Float16;
+        
         public float IoUThreshold;
         public float ScoreThreshold;
+        
         public BackendType BackendType;
 
-        public YOLOInferenceHandlerParameters(bool addClassificationHead = true, bool quantizeModel = false, QuantizationType quantizationType = QuantizationType.Float16, float iouThreshold = 0.5f, float scoreThreshold = 0.5f, BackendType backendType = BackendType.GPUCompute)
+        public YOLOInferenceHandlerParameters(YOLOCustomization yoloCustomization = YOLOCustomization.AddClassificationHead, YOLOQuantizationType yoloQuantizationType = YOLOQuantizationType.None, float iouThreshold = 0.5f, float scoreThreshold = 0.5f, BackendType backendType = BackendType.GPUCompute)
         {
-            AddClassificationHead = addClassificationHead;
-            QuantizeModel = quantizeModel;
-            QuantizationType = quantizationType;
+            AddClassificationHead = yoloCustomization == YOLOCustomization.AddClassificationHead;
             IoUThreshold = iouThreshold;
             ScoreThreshold = scoreThreshold;
             BackendType = backendType;
+
+            switch (yoloQuantizationType)
+            {
+                case YOLOQuantizationType.Float16:
+                    QuantizeModel = true;
+                    QuantizationType = QuantizationType.Float16;
+                    break;
+                case YOLOQuantizationType.Uint8:
+                    QuantizeModel = true;
+                    QuantizationType = QuantizationType.Uint8;
+                    break;
+                default:
+                    QuantizeModel = false;
+                    break;
+            }
+
         }
     }
+
+    public class YOLOModelAsset
+    {
+        public ModelAsset ModelAsset { get; private set; }
+
+        public YOLOModelAsset(ModelAsset modelAsset)
+        {
+            ModelAsset = modelAsset;
+        }
+    }
+
+    public enum YOLOQuantizationType
+    {
+        None,
+        Float16,
+        Uint8
+    }
+
+    public enum YOLOCustomization
+    { 
+        AddClassificationHead,
+        None
+    }
+
 }

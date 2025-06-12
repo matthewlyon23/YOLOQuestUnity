@@ -7,8 +7,6 @@ using YOLOQuestUnity.Inference;
 using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
 using YOLOQuestUnity.Display;
-using System.Text;
-using System.Linq;
 
 namespace YOLOQuestUnity.YOLO
 {
@@ -63,7 +61,7 @@ namespace YOLOQuestUnity.YOLO
         void Start()
         {
             _classes = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<int, string>>>(_classJson.text)["class"];
-            _inferenceHandler = new YOLOInferenceHandler(_model, ref InputSize, _addClassificationHead);
+            _inferenceHandler = new YOLOInferenceHandler(new YOLOModelAsset(_model), ref InputSize, new YOLOInferenceHandlerParameters(yoloQuantizationType: YOLOQuantizationType.Float16));
             if (_layersPerFrame <= 0) _layersPerFrame = 1;
             _analysisCamera = GetComponent<Camera>();
         }
