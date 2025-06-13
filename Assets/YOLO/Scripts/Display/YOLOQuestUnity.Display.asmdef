@@ -7,7 +7,8 @@
         "YOLOQuestUnity.Utilities",
         "YOLOQuestUnity.ObjectDetection",
         "Unity.XR.Oculus",
-        "YOLOQuestUnity.PassthroughCamera"
+        "YOLOQuestUnity.PassthroughCamera",
+        "MyBox"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

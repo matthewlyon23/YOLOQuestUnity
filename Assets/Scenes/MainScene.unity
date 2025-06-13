@@ -1162,14 +1162,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _model: {fileID: 5022602860645237092, guid: 9a58e46a0f5b74f49b56a0f019836020, type: 3}
-  _addClassificationHead: 1
   InputSize: 640
-  _layersPerFrame: 10
-  _confidenceThreshold: 0.5
+  _layersPerFrame: 20
+  _confidenceThreshold: 0.7
   _classJson: {fileID: 4900000, guid: cdb05da3b5395d7439c72325999baca2, type: 3}
   YOLOCamera: {fileID: 1246362433}
   _referenceCamera: {fileID: 2011555088}
   _displayManager: {fileID: 1951288686}
+  _customizeModel: 1
+  _addClassificationHead: 1
+  _quantizationType: 2
+  _backendType: 256
+  _addNMS: 0
+  _iouThreshold: 0.5
+  _scoreThreshold: 0.5
 --- !u!4 &1703198767
 Transform:
   m_ObjectHideFlags: 0
@@ -1342,8 +1348,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96e0a334d2cb1fa478ad6cb8fc279adf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _maxModelCount: 20
-  _distanceThreshold: 0.5
+  _maxModelCount: 0
+  _distanceThreshold: 2
   _cocoModels:
     _serializedList:
     - Key: keyboard
