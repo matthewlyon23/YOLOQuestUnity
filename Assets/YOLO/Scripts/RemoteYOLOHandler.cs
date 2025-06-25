@@ -11,6 +11,7 @@ using YOLOQuestUnity.Display;
 using System;
 using System.Net.Http;
 using UnityEngine.Android;
+using System.Security.Cryptography;
 
 namespace YOLOQuestUnity.YOLO
 {
@@ -30,7 +31,7 @@ namespace YOLOQuestUnity.YOLO
 
         private Texture2D m_inputTexture;
         private bool m_inferencePending = false;
-        private Awaitable<List<DetectedObject>> m_pendingDetectedObjects;
+        private Awaitable<RemoteYOLOResponse> m_pendingDetectedObjects;
         private Camera m_analysisCamera;
 
 
@@ -55,11 +56,13 @@ namespace YOLOQuestUnity.YOLO
             {
                 try
                 {
-                    AnalyseImage(m_inputTexture).GetAwaiter().OnCompleted(() =>
+                    m_pendingDetectedObjects = AnalyseImage(m_inputTexture);
+                    m_pendingDetectedObjects.GetAwaiter().OnCompleted(() =>
                     {
                         m_inferencePending = false;
-                        m_objectDisplayManager.DisplayModels(m_pendingDetectedObjects.GetAwaiter().GetResult(), m_analysisCamera);
+                        m_objectDisplayManager.DisplayModels(Postprocess(m_pendingDetectedObjects.GetAwaiter().GetResult()), m_analysisCamera);
                     });
+
                     m_inferencePending = true;
                     m_analysisCamera.CopyFrom(m_referenceCamera);
                 }
@@ -71,7 +74,7 @@ namespace YOLOQuestUnity.YOLO
             }
         }
 
-        public async Awaitable<List<DetectedObject>> AnalyseImage(Texture2D texture)
+        private async Awaitable<RemoteYOLOResponse> AnalyseImage(Texture2D texture)
         {
             var start = DateTime.Now;
 
@@ -91,23 +94,18 @@ namespace YOLOQuestUnity.YOLO
             if (!response.IsSuccessStatusCode)
             {
                 Debug.Log($"{response.StatusCode}, {response.Content.ReadAsStringAsync().Result}");
-                return new List<DetectedObject>();
+                return null;
             }
 
             var responseString = await response.Content.ReadAsStringAsync();
 
             var res = JsonConvert.DeserializeObject<RemoteYOLOResponse>(responseString);
 
+            var end = DateTime.Now;
 
-            List<DetectedObject> results = new();
-            foreach(RemoteYOLOPredictionResult obj in res.result)
-            {
-                var cx = (obj.box.x1 + obj.box.x2) / 2;
-                var cy = (obj.box.y1 + obj.box.y2) / 2;
-                var width = (obj.box.x2 - obj.box.x1);
-                var height = (obj.box.y2 - obj.box.y1);
-                results.Add(new DetectedObject(cx, cy, width, height, obj.class_id, obj.name, obj.confidence));
-            }
+            Debug.Log("Time for network: " + (end - start).TotalMilliseconds + "ms");
+
+            return res;
 
 
             //MultipartFormDataSection format = new("format", m_YOLOFormat.ToString().ToLower());
@@ -137,11 +135,21 @@ namespace YOLOQuestUnity.YOLO
             //        var height = (obj.box.y2 - obj.box.y1);
             //        results.Add(new DetectedObject(cx, cy, width, height, obj.class_id, obj.name, obj.confidence));
             //    }
-            //}
+            //}            
+        }
 
-            var end = DateTime.Now;
+        private List<DetectedObject> Postprocess(RemoteYOLOResponse response)
+        {
+            List<DetectedObject> results = new();
 
-            Debug.Log("Time for network: " + (end - start).TotalMilliseconds + "ms");
+            foreach (RemoteYOLOPredictionResult obj in response.result)
+            {
+                var cx = (obj.box.x1 + obj.box.x2) / 2;
+                var cy = (obj.box.y1 + obj.box.y2) / 2;
+                var width = (obj.box.x2 - obj.box.x1);
+                var height = (obj.box.y2 - obj.box.y1);
+                results.Add(new DetectedObject(cx, cy, width, height, obj.class_id, obj.name, obj.confidence));
+            }
 
             return results;
         }

@@ -1028,6 +1028,56 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30240d6cac2e5204886718e0df51118a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1524867588
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1524867590}
+  - component: {fileID: 1524867589}
+  m_Layer: 0
+  m_Name: RemoteYOLOHandler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1524867589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1524867588}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1bc8cb9795729b458595494dcb541e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_remoteYOLOProcessorAddress: http://192.168.1.242:44777/api/analyse
+  m_YOLOFormat: 0
+  m_YOLOModel: 0
+  m_objectDisplayManager: {fileID: 1951288686}
+  YOLOCamera: {fileID: 1246362433}
+  m_referenceCamera: {fileID: 2011555088}
+--- !u!4 &1524867590
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1524867588}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1608297179
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1148,7 +1198,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1703198766
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1679,3 +1729,4 @@ SceneRoots:
   - {fileID: 2104921551}
   - {fileID: 1951288687}
   - {fileID: 1246362434}
+  - {fileID: 1524867590}
