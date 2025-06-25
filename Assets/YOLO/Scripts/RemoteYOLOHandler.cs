@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Networking;
 using MyBox;
 using System.Collections.Generic;
 using Newtonsoft.Json;
@@ -11,7 +10,6 @@ using YOLOQuestUnity.Display;
 using System;
 using System.Net.Http;
 using UnityEngine.Android;
-using System.Security.Cryptography;
 
 namespace YOLOQuestUnity.YOLO
 {
@@ -48,19 +46,21 @@ namespace YOLOQuestUnity.YOLO
 
         private void Update()
         {
-            if (YOLOCamera is null) return;
+            if (YOLOCamera == null) return;
 
-            if ((m_inputTexture = YOLOCamera.GetTexture()) is null) return;
+            if ((m_inputTexture = YOLOCamera.GetTexture()) == null) return;
 
             if (!m_inferencePending)
             {
                 try
                 {
                     m_pendingDetectedObjects = AnalyseImage(m_inputTexture);
-                    m_pendingDetectedObjects.GetAwaiter().OnCompleted(() =>
+                    m_pendingDetectedObjects.GetAwaiter().OnCompleted(async () =>
                     {
                         m_inferencePending = false;
-                        m_objectDisplayManager.DisplayModels(Postprocess(m_pendingDetectedObjects.GetAwaiter().GetResult()), m_analysisCamera);
+                        var response = await m_pendingDetectedObjects;
+                        Debug.Log("Inference Time: " + response.metadata.speed.inference);
+                        m_objectDisplayManager.DisplayModels(Postprocess(response), m_analysisCamera);
                     });
 
                     m_inferencePending = true;
@@ -69,6 +69,7 @@ namespace YOLOQuestUnity.YOLO
                 catch (Exception e)
                 {
                     Debug.LogError(e);
+                    m_inferencePending = false;
                 }
                 
             }
@@ -81,21 +82,17 @@ namespace YOLOQuestUnity.YOLO
             var imageData = texture.EncodeToJPG();
 
             HttpClient client = new();
-            HttpRequestMessage request = new();
+            HttpRequestMessage request = new(HttpMethod.Post, m_remoteYOLOProcessorAddress);
             using MultipartFormDataContent content = new();
 
-            content.Add(new StringContent("format"), m_YOLOFormat.ToString().ToLower());
-            content.Add(new StringContent("model"), m_YOLOModel.ToString().ToLower());
+            content.Add(new StringContent(m_YOLOFormat.ToString().ToLower()), "format");
+            content.Add(new StringContent(m_YOLOModel.ToString().ToLower()), "model");
             content.Add(new ByteArrayContent(imageData), "image", "image.jpg");
             request.Content = content;
             
             HttpResponseMessage response = await client.SendAsync(request);
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                Debug.Log($"{response.StatusCode}, {response.Content.ReadAsStringAsync().Result}");
-                return null;
-            }
+
+            if (!response.IsSuccessStatusCode) throw new HttpRequestException();
 
             var responseString = await response.Content.ReadAsStringAsync();
 
@@ -106,36 +103,6 @@ namespace YOLOQuestUnity.YOLO
             Debug.Log("Time for network: " + (end - start).TotalMilliseconds + "ms");
 
             return res;
-
-
-            //MultipartFormDataSection format = new("format", m_YOLOFormat.ToString().ToLower());
-            //MultipartFormDataSection model = new("model", m_YOLOModel.ToString().ToLower());
-            //MultipartFormFileSection image = new("image", imageData);
-
-            //DownloadHandler downloadHandler = new DownloadHandlerBuffer();
-            //UploadHandler uploadHandler = new UploadHandlerRaw(UnityWebRequest.SerializeFormSections(new List<IMultipartFormSection>() { format, model, image }, UnityWebRequest.GenerateBoundary()));
-
-            //UnityWebRequest request = new UnityWebRequest(m_remoteYOLOProcessorAddress, UnityWebRequest.kHttpVerbPOST, downloadHandler, uploadHandler);
-            //await request.SendWebRequest();
-
-            //List<DetectedObject> results = new();
-
-            //Debug.Log($"RemoteYOLO: {request.result}, {request.responseCode}, {request.downloadHandler.text}");
-
-            //if (request.result == UnityWebRequest.Result.Success)
-            //{
-            //    var response = ((DownloadHandlerBuffer)request.downloadHandler).text;
-            //    JsonSerializer serializer = new JsonSerializer();
-            //    var result = serializer.Deserialize<RemoteYOLOResponse>(new JsonTextReader(new System.IO.StringReader(response)));
-            //    foreach (RemoteYOLOPredictionResult obj in result.result)
-            //    {
-            //        var cx = (obj.box.x1 + obj.box.x2) / 2;
-            //        var cy = (obj.box.y1 + obj.box.y2) / 2;
-            //        var width = (obj.box.x2 - obj.box.x1);
-            //        var height = (obj.box.y2 - obj.box.y1);
-            //        results.Add(new DetectedObject(cx, cy, width, height, obj.class_id, obj.name, obj.confidence));
-            //    }
-            //}            
         }
 
         private List<DetectedObject> Postprocess(RemoteYOLOResponse response)
