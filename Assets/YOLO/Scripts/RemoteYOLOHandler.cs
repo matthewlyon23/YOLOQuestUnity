@@ -32,6 +32,8 @@ namespace YOLOQuestUnity.YOLO
         private Awaitable<RemoteYOLOResponse> m_pendingDetectedObjects;
         private Camera m_analysisCamera;
 
+        static HttpClient client = new();
+
 
         private void Start()
         {
@@ -81,16 +83,15 @@ namespace YOLOQuestUnity.YOLO
 
             var imageData = texture.EncodeToJPG();
 
-            HttpClient client = new();
-            HttpRequestMessage request = new(HttpMethod.Post, m_remoteYOLOProcessorAddress);
-            using MultipartFormDataContent content = new();
+            using HttpRequestMessage request = new(HttpMethod.Post, m_remoteYOLOProcessorAddress);
+            MultipartFormDataContent content = new();
 
             content.Add(new StringContent(m_YOLOFormat.ToString().ToLower()), "format");
             content.Add(new StringContent(m_YOLOModel.ToString().ToLower()), "model");
             content.Add(new ByteArrayContent(imageData), "image", "image.jpg");
             request.Content = content;
             
-            HttpResponseMessage response = await client.SendAsync(request);
+            using HttpResponseMessage response = await client.SendAsync(request);
 
             if (!response.IsSuccessStatusCode) throw new HttpRequestException();
 
