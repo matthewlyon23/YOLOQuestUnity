@@ -81,7 +81,7 @@ namespace YOLOQuestUnity.YOLO
         {
             var start = DateTime.Now;
 
-            var imageData = texture.EncodeToJPG();
+            var imageData = texture.EncodeToJPG(100);
 
             using HttpRequestMessage request = new(HttpMethod.Post, m_remoteYOLOProcessorAddress);
             MultipartFormDataContent content = new();
