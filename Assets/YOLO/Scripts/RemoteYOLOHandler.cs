@@ -1,15 +1,18 @@
-using UnityEngine;
-using MyBox;
-using System.Collections.Generic;
-using Newtonsoft.Json;
-using YOLOQuestUnity.ObjectDetection;
-using Newtonsoft.Json.Linq;
-using System.Runtime.Serialization;
-using YOLOQuestUnity.Utilities;
-using YOLOQuestUnity.Display;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
+using System.Runtime.Serialization;
+using System.Threading;
+using MyBox;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using UnityEngine;
 using UnityEngine.Android;
+using UnityEngine.Experimental.Rendering;
+using YOLOQuestUnity.Display;
+using YOLOQuestUnity.ObjectDetection;
+using YOLOQuestUnity.Utilities;
 
 namespace YOLOQuestUnity.YOLO
 {
@@ -34,6 +37,8 @@ namespace YOLOQuestUnity.YOLO
 
         static HttpClient client = new();
 
+        private byte[] m_imageData;
+        private bool m_encodingImage = false;
 
         private void Start()
         {
@@ -77,28 +82,64 @@ namespace YOLOQuestUnity.YOLO
             }
         }
 
+        private void EncodeImageJPG(object paras)
+        {
+            Debug.Log("inside thread");
+            var p = (ImageConversionThreadParams)paras;
+            m_imageData = ImageConversion.EncodeArrayToJPG(p.imageBuffer, p.graphicsFormat, p.width, p.height, quality: p.quality);
+            m_encodingImage = false;
+        }
+
         private async Awaitable<RemoteYOLOResponse> AnalyseImage(Texture2D texture)
         {
+            var jpegEncodeStart = DateTime.Now;
+
+            Thread encodingThread = new Thread(EncodeImageJPG);
+            var imageConversionParams = new ImageConversionThreadParams
+            {   
+                imageBuffer = texture.GetRawTextureData(),
+                graphicsFormat = texture.graphicsFormat,
+                height = (uint)texture.height,
+                width = (uint)texture.width,
+                quality = 75
+            };
+            m_encodingImage = true;
+            Debug.Log("Starting thread");
+            encodingThread.Start(imageConversionParams);
+
+            while (encodingThread.ThreadState == ThreadState.Running)
+            {
+                Debug.Log("Waiting for completion");
+                await Awaitable.NextFrameAsync();
+            }
+
+            Debug.Log("Encoding finished");
+
+            encodingThread.Join();
+
+            var jpegEncodeEnd = DateTime.Now;
+
             var start = DateTime.Now;
+            RemoteYOLOResponse res;
+            using (HttpRequestMessage request = new(HttpMethod.Post, m_remoteYOLOProcessorAddress))
+            {
+                MultipartFormDataContent content = new();
 
-            var imageData = texture.EncodeToJPG(100);
+                content.Add(new StringContent(m_YOLOFormat.ToString().ToLower()), "format");
+                content.Add(new StringContent(m_YOLOModel.ToString().ToLower()), "model");
+                content.Add(new ByteArrayContent(m_imageData), "image", "image.jpg");
+                request.Content = content;
 
-            using HttpRequestMessage request = new(HttpMethod.Post, m_remoteYOLOProcessorAddress);
-            MultipartFormDataContent content = new();
+                using (HttpResponseMessage response = await client.SendAsync(request))
+                {
+                    if (!response.IsSuccessStatusCode) throw new HttpRequestException($"Request failed: {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
 
-            content.Add(new StringContent(m_YOLOFormat.ToString().ToLower()), "format");
-            content.Add(new StringContent(m_YOLOModel.ToString().ToLower()), "model");
-            content.Add(new ByteArrayContent(imageData), "image", "image.jpg");
-            request.Content = content;
+                    var responseString = await response.Content.ReadAsStringAsync();
+
+                    res = JsonConvert.DeserializeObject<RemoteYOLOResponse>(responseString);
+                }
+            }
             
-            using HttpResponseMessage response = await client.SendAsync(request);
-
-            if (!response.IsSuccessStatusCode) throw new HttpRequestException();
-
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            var res = JsonConvert.DeserializeObject<RemoteYOLOResponse>(responseString);
-
             var end = DateTime.Now;
 
             Debug.Log("Time for network: " + (end - start).TotalMilliseconds + "ms");
@@ -120,6 +161,15 @@ namespace YOLOQuestUnity.YOLO
             }
 
             return results;
+        }
+
+        private struct ImageConversionThreadParams
+        {
+            public byte[] imageBuffer;
+            public GraphicsFormat graphicsFormat;
+            public uint width;
+            public uint height;
+            public int quality;
         }
 
         private enum YOLOFormat
