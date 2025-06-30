@@ -124,6 +124,7 @@ namespace YOLOQuestUnity.YOLO
 
         private async Awaitable<RemoteYOLOResponse> SendRemoteRequest()
         {
+            await Awaitable.BackgroundThreadAsync();
             using HttpRequestMessage request = new(HttpMethod.Post, m_remoteYOLOProcessorAddress) ;
             
             MultipartFormDataContent content = new();
@@ -138,6 +139,7 @@ namespace YOLOQuestUnity.YOLO
             if (!response.IsSuccessStatusCode) throw new HttpRequestException($"Request failed: {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
             
             var responseString = await response.Content.ReadAsStringAsync();
+            await Awaitable.MainThreadAsync();
             return JsonConvert.DeserializeObject<RemoteYOLOResponse>(responseString);
         }
 
