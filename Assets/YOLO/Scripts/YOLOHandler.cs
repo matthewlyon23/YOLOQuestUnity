@@ -112,7 +112,7 @@ namespace YOLOQuestUnity.YOLO
         {
             if (_inferenceHandler is null) return;
 
-            if (YOLOCamera is null) return;
+            if (YOLOCamera == null) return;
 
             if (readingBack) return;
 
@@ -134,10 +134,10 @@ namespace YOLOQuestUnity.YOLO
                     int it = 0;
                     Profiler.BeginSample("YOLOHandler.SplitInference");
                     while (splitInferenceEnumerator.MoveNext()) if (++it % _layersPerFrame == 0)
-                        {
-                            Profiler.EndSample();
-                            return;
-                        }
+                    {
+                        Profiler.EndSample();
+                        return;
+                    }
 
                     readingBack = true;
                     analysisResultTensor = _inferenceHandler.PeekOutput() as Tensor<float>;

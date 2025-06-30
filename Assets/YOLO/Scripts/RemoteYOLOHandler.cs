@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.Serialization;
-using System.Threading;
+using System.Threading.Tasks;
 using MyBox;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -32,14 +32,15 @@ namespace YOLOQuestUnity.YOLO
 
         private Texture2D m_inputTexture;
         private bool m_inferencePending = false;
-        private Awaitable<RemoteYOLOResponse> m_pendingDetectedObjects;
+        private bool m_inferenceDone = false;
+        private RemoteYOLOResponse m_remoteYOLOResponse;
         private Camera m_analysisCamera;
 
         static HttpClient client = new();
 
         private byte[] m_imageData;
-        private bool m_encodingImage = false;
-
+        private bool m_encodingImage;
+        
         private void Start()
         {
 
@@ -49,52 +50,50 @@ namespace YOLOQuestUnity.YOLO
             }
 
             m_analysisCamera = GetComponent<Camera>();
+            File.Delete(Path.Join(Application.persistentDataPath, "metrics.txt"));
+            File.Create(Path.Join (Application.persistentDataPath, "metrics.txt")).Close();
         }
 
         private void Update()
         {
-            if (YOLOCamera == null) return;
-
-            if ((m_inputTexture = YOLOCamera.GetTexture()) == null) return;
-
-            if (!m_inferencePending)
+            if (m_inferencePending) return;
+            
+            try
             {
-                try
+                if (!m_inferenceDone)
                 {
-                    m_pendingDetectedObjects = AnalyseImage(m_inputTexture);
-                    m_pendingDetectedObjects.GetAwaiter().OnCompleted(async () =>
-                    {
-                        m_inferencePending = false;
-                        var response = await m_pendingDetectedObjects;
-                        Debug.Log("Inference Time: " + response.metadata.speed.inference);
-                        m_objectDisplayManager.DisplayModels(Postprocess(response), m_analysisCamera);
-                    });
-
+                    if (YOLOCamera == null) return;
+                    if ((m_inputTexture = YOLOCamera.GetTexture()) == null) return;
+                    _ = AnalyseImage(m_inputTexture);
                     m_inferencePending = true;
                     m_analysisCamera.CopyFrom(m_referenceCamera);
                 }
-                catch (Exception e)
+                else
                 {
-                    Debug.LogError(e);
                     m_inferencePending = false;
+                    m_inferenceDone = false;
+                    m_objectDisplayManager.DisplayModels(Postprocess(m_remoteYOLOResponse), m_analysisCamera);
                 }
-                
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+                m_inferencePending = false;
+                m_inferenceDone = false;
             }
         }
 
         private void EncodeImageJPG(object paras)
         {
-            Debug.Log("inside thread");
             var p = (ImageConversionThreadParams)paras;
             m_imageData = ImageConversion.EncodeArrayToJPG(p.imageBuffer, p.graphicsFormat, p.width, p.height, quality: p.quality);
             m_encodingImage = false;
         }
 
-        private async Awaitable<RemoteYOLOResponse> AnalyseImage(Texture2D texture)
+        private async Awaitable AnalyseImage(Texture2D texture)
         {
             var jpegEncodeStart = DateTime.Now;
 
-            Thread encodingThread = new Thread(EncodeImageJPG);
             var imageConversionParams = new ImageConversionThreadParams
             {   
                 imageBuffer = texture.GetRawTextureData(),
@@ -103,48 +102,43 @@ namespace YOLOQuestUnity.YOLO
                 width = (uint)texture.width,
                 quality = 75
             };
-            m_encodingImage = true;
-            Debug.Log("Starting thread");
-            encodingThread.Start(imageConversionParams);
-
-            while (encodingThread.ThreadState == ThreadState.Running)
-            {
-                Debug.Log("Waiting for completion");
-                await Awaitable.NextFrameAsync();
-            }
-
-            Debug.Log("Encoding finished");
-
-            encodingThread.Join();
-
+            
+            await Task.Run(() => EncodeImageJPG(imageConversionParams));
             var jpegEncodeEnd = DateTime.Now;
 
             var start = DateTime.Now;
-            RemoteYOLOResponse res;
-            using (HttpRequestMessage request = new(HttpMethod.Post, m_remoteYOLOProcessorAddress))
-            {
-                MultipartFormDataContent content = new();
-
-                content.Add(new StringContent(m_YOLOFormat.ToString().ToLower()), "format");
-                content.Add(new StringContent(m_YOLOModel.ToString().ToLower()), "model");
-                content.Add(new ByteArrayContent(m_imageData), "image", "image.jpg");
-                request.Content = content;
-
-                using (HttpResponseMessage response = await client.SendAsync(request))
-                {
-                    if (!response.IsSuccessStatusCode) throw new HttpRequestException($"Request failed: {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
-
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    res = JsonConvert.DeserializeObject<RemoteYOLOResponse>(responseString);
-                }
-            }
-            
+            var res = await SendRemoteRequest();
             var end = DateTime.Now;
 
-            Debug.Log("Time for network: " + (end - start).TotalMilliseconds + "ms");
+            await using (StreamWriter sw = new StreamWriter(Path.Join(Application.persistentDataPath, "metrics.txt"), true))
+            {
+                await sw.WriteLineAsync("Encode time: " + (jpegEncodeEnd - jpegEncodeStart).TotalMilliseconds + "ms");
+                await sw.WriteLineAsync("Network Time: " + (end - start).TotalMilliseconds);
+                await sw.WriteLineAsync("Inference Time: " + res.metadata.speed.inference);
+            }
 
-            return res;
+            m_remoteYOLOResponse = res;
+            m_inferenceDone = true;
+            m_inferencePending = false;
+        }
+
+        private async Awaitable<RemoteYOLOResponse> SendRemoteRequest()
+        {
+            using HttpRequestMessage request = new(HttpMethod.Post, m_remoteYOLOProcessorAddress) ;
+            
+            MultipartFormDataContent content = new();
+            
+            content.Add(new StringContent(m_YOLOFormat.ToString().ToLower()), "format");
+            content.Add(new StringContent(m_YOLOModel.ToString().ToLower()), "model");
+            content.Add(new ByteArrayContent(m_imageData), "image", "image.jpg");
+            request.Content = content;
+            
+            using HttpResponseMessage response = await client.SendAsync(request);
+                
+            if (!response.IsSuccessStatusCode) throw new HttpRequestException($"Request failed: {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
+            
+            var responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<RemoteYOLOResponse>(responseString);
         }
 
         private List<DetectedObject> Postprocess(RemoteYOLOResponse response)
@@ -163,7 +157,7 @@ namespace YOLOQuestUnity.YOLO
             return results;
         }
 
-        private struct ImageConversionThreadParams
+        private class ImageConversionThreadParams
         {
             public byte[] imageBuffer;
             public GraphicsFormat graphicsFormat;
