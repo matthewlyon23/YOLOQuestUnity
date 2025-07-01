@@ -4,6 +4,7 @@ using System.Collections;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Experimental.Rendering;
 using YOLOQuestUnity.Utilities;
 
 namespace YOLOQuestUnity.PassthroughCamera
@@ -117,9 +118,6 @@ namespace YOLOQuestUnity.PassthroughCamera
                         webCamTexture.Play();
                         m_feedDimensions = new FeedDimensions(webCamTexture.width, webCamTexture.height);
                         WebCamTexture = webCamTexture;
-                        Destroy(m_currentTexture);
-                        m_currentTexture = new  Texture2D(webCamTexture.width, webCamTexture.height);
-                        Graphics.CopyTexture(WebCamTexture, m_currentTexture);
                         yield break;
                     }
                 }
@@ -130,6 +128,12 @@ namespace YOLOQuestUnity.PassthroughCamera
 
         public override Texture2D GetTexture()
         {
+            if (WebCamTexture == null) return null;
+            
+            Destroy(m_currentTexture);
+            m_currentTexture = new Texture2D(WebCamTexture.width, WebCamTexture.height, WebCamTexture.graphicsFormat, TextureCreationFlags.None);
+            m_currentTexture.SetPixels32(WebCamTexture.GetPixels32());
+            m_currentTexture.Apply();
             return m_currentTexture;
         }
 

@@ -24,7 +24,7 @@ namespace YOLOQuestUnity.YOLO
         [SerializeField] private YOLOModel m_YOLOModel;
         [Space(40)]
         [MustBeAssigned]
-        [SerializeField] private ObjectDisplayManager m_objectDisplayManager;
+        [SerializeField] [DisplayInspector] private ObjectDisplayManager m_objectDisplayManager;
         [MustBeAssigned] public VideoFeedManager YOLOCamera;
         [MustBeAssigned]
         [SerializeField] private Camera m_referenceCamera; 
@@ -36,10 +36,9 @@ namespace YOLOQuestUnity.YOLO
         private RemoteYOLOResponse m_remoteYOLOResponse;
         private Camera m_analysisCamera;
 
-        static HttpClient client = new();
-
+        private static readonly HttpClient Client = new();
+        
         private byte[] m_imageData;
-        private bool m_encodingImage;
         
         private void Start()
         {
@@ -87,7 +86,6 @@ namespace YOLOQuestUnity.YOLO
         {
             var p = (ImageConversionThreadParams)paras;
             m_imageData = ImageConversion.EncodeArrayToJPG(p.imageBuffer, p.graphicsFormat, p.width, p.height, quality: p.quality);
-            m_encodingImage = false;
         }
 
         private async Awaitable AnalyseImage(Texture2D texture)
@@ -132,7 +130,7 @@ namespace YOLOQuestUnity.YOLO
             content.Add(new ByteArrayContent(m_imageData), "image", "image.jpg");
             request.Content = content;
             
-            using HttpResponseMessage response = await client.SendAsync(request);
+            using HttpResponseMessage response = await Client.SendAsync(request);
                 
             if (!response.IsSuccessStatusCode) throw new HttpRequestException($"Request failed: {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
             
