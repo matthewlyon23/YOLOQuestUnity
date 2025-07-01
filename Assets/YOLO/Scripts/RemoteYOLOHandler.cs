@@ -28,7 +28,8 @@ namespace YOLOQuestUnity.YOLO
         [MustBeAssigned] public VideoFeedManager YOLOCamera;
         [MustBeAssigned]
         [SerializeField] private Camera m_referenceCamera; 
-
+        [Space(30)]
+        [SerializeField] private float m_confidenceThreshold = 0.5f;
 
         private Texture2D m_inputTexture;
         private bool m_inferencePending = false;
@@ -91,16 +92,18 @@ namespace YOLOQuestUnity.YOLO
         private async Awaitable AnalyseImage(Texture2D texture)
         {
             var jpegEncodeStart = DateTime.Now;
+
+            var imageConversionThreadParams = new ImageConversionThreadParams
+            {
+                imageBuffer = texture.GetRawTextureData(),
+                graphicsFormat = texture.graphicsFormat,
+                height = (uint)texture.height,
+                width = (uint)texture.width,
+                quality = 75
+            };
             
-            await Task.Run(() => EncodeImageJPG(new ImageConversionThreadParams
-                {   
-                    imageBuffer = texture.GetRawTextureData(),
-                    graphicsFormat = texture.graphicsFormat,
-                    height = (uint)texture.height,
-                    width = (uint)texture.width,
-                    quality = 75
-                })
-            );
+            await Task.Run(() => EncodeImageJPG(imageConversionThreadParams));
+            
             var jpegEncodeEnd = DateTime.Now;
 
             var start = DateTime.Now;
@@ -144,8 +147,9 @@ namespace YOLOQuestUnity.YOLO
 
             foreach (RemoteYOLOPredictionResult obj in response.result)
             {
+                if (obj.confidence < m_confidenceThreshold) continue;
                 var cx = (obj.box.x1 + obj.box.x2) / 2;
-                var cy = (obj.box.y1 + obj.box.y2) / 2;
+                var cy = m_inputTexture.height - (obj.box.y1 + obj.box.y2) / 2;
                 var width = (obj.box.x2 - obj.box.x1);
                 var height = (obj.box.y2 - obj.box.y1);
                 results.Add(new DetectedObject(cx, cy, width, height, obj.class_id, obj.name, obj.confidence));
