@@ -93,17 +93,16 @@ namespace YOLOQuestUnity.YOLO
         private async Awaitable AnalyseImage(Texture2D texture)
         {
             var jpegEncodeStart = DateTime.Now;
-
-            var imageConversionParams = new ImageConversionThreadParams
-            {   
-                imageBuffer = texture.GetRawTextureData(),
-                graphicsFormat = texture.graphicsFormat,
-                height = (uint)texture.height,
-                width = (uint)texture.width,
-                quality = 75
-            };
             
-            await Task.Run(() => EncodeImageJPG(imageConversionParams));
+            await Task.Run(() => EncodeImageJPG(new ImageConversionThreadParams
+                {   
+                    imageBuffer = texture.GetRawTextureData(),
+                    graphicsFormat = texture.graphicsFormat,
+                    height = (uint)texture.height,
+                    width = (uint)texture.width,
+                    quality = 75
+                })
+            );
             var jpegEncodeEnd = DateTime.Now;
 
             var start = DateTime.Now;
