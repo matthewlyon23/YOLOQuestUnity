@@ -1043,9 +1043,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1bc8cb9795729b458595494dcb541e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_remoteYOLOProcessorAddress: http://192.168.1.128:44777/api/analyse
+  m_remoteYOLOProcessorAddress: http://192.168.1.131:44777/api/analyse
   m_YOLOFormat: 0
-  m_YOLOModel: 0
+  m_YOLOModel: 1
+  m_confidenceThreshold: 0.7
   m_objectDisplayManager: {fileID: 1951288686}
   YOLOCamera: {fileID: 1246362433}
   m_referenceCamera: {fileID: 2011555088}
@@ -1479,12 +1480,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96e0a334d2cb1fa478ad6cb8fc279adf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _maxModelCount: 0
-  _distanceThreshold: 2
+  _maxModelCount: 5
+  _distanceThreshold: 0
   _cocoModels:
     _serializedList:
-    - Key: keyboard
-      Value: {fileID: 3750004252618185731, guid: a5fbb93e17152c1469498e50aa65f767, type: 3}
     - Key: tv
       Value: {fileID: 1802804698819089513, guid: fb6b6681063e73c4bbe4b0fa9b377189, type: 3}
     - Key: backpack
@@ -1508,7 +1507,7 @@ MonoBehaviour:
     - Key: umbrella
       Value: {fileID: 919132149155446097, guid: 6a2300f147ae5734badb83315730b4e1, type: 3}
   _movingObjects: 1
-  _scaleType: 2
+  _scaleType: 3
   _videoFeedManager: {fileID: 1246362433}
 --- !u!4 &1951288687
 Transform:
