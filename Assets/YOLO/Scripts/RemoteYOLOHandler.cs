@@ -24,11 +24,12 @@ namespace YOLOQuestUnity.YOLO
         [SerializeField] private YOLOModel m_YOLOModel;
         [Space(40)]
         [MustBeAssigned]
-        [SerializeField] private ObjectDisplayManager m_objectDisplayManager;
+        [SerializeField] [DisplayInspector] private ObjectDisplayManager m_objectDisplayManager;
         [MustBeAssigned] public VideoFeedManager YOLOCamera;
         [MustBeAssigned]
         [SerializeField] private Camera m_referenceCamera; 
-
+        [Space(30)]
+        [SerializeField] private float m_confidenceThreshold = 0.5f;
 
         private Texture2D m_inputTexture;
         private bool m_inferencePending = false;
@@ -36,10 +37,9 @@ namespace YOLOQuestUnity.YOLO
         private RemoteYOLOResponse m_remoteYOLOResponse;
         private Camera m_analysisCamera;
 
-        static HttpClient client = new();
-
+        private static readonly HttpClient Client = new();
+        
         private byte[] m_imageData;
-        private bool m_encodingImage;
         
         private void Start()
         {
@@ -87,15 +87,14 @@ namespace YOLOQuestUnity.YOLO
         {
             var p = (ImageConversionThreadParams)paras;
             m_imageData = ImageConversion.EncodeArrayToJPG(p.imageBuffer, p.graphicsFormat, p.width, p.height, quality: p.quality);
-            m_encodingImage = false;
         }
 
         private async Awaitable AnalyseImage(Texture2D texture)
         {
             var jpegEncodeStart = DateTime.Now;
 
-            var imageConversionParams = new ImageConversionThreadParams
-            {   
+            var imageConversionThreadParams = new ImageConversionThreadParams
+            {
                 imageBuffer = texture.GetRawTextureData(),
                 graphicsFormat = texture.graphicsFormat,
                 height = (uint)texture.height,
@@ -103,7 +102,8 @@ namespace YOLOQuestUnity.YOLO
                 quality = 75
             };
             
-            await Task.Run(() => EncodeImageJPG(imageConversionParams));
+            await Task.Run(() => EncodeImageJPG(imageConversionThreadParams));
+            
             var jpegEncodeEnd = DateTime.Now;
 
             var start = DateTime.Now;
@@ -134,7 +134,7 @@ namespace YOLOQuestUnity.YOLO
             content.Add(new ByteArrayContent(m_imageData), "image", "image.jpg");
             request.Content = content;
             
-            using HttpResponseMessage response = await client.SendAsync(request);
+            using HttpResponseMessage response = await Client.SendAsync(request);
                 
             if (!response.IsSuccessStatusCode) throw new HttpRequestException($"Request failed: {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
             
@@ -149,8 +149,9 @@ namespace YOLOQuestUnity.YOLO
 
             foreach (RemoteYOLOPredictionResult obj in response.result)
             {
+                if (obj.confidence < m_confidenceThreshold) continue;
                 var cx = (obj.box.x1 + obj.box.x2) / 2;
-                var cy = (obj.box.y1 + obj.box.y2) / 2;
+                var cy = m_inputTexture.height - (obj.box.y1 + obj.box.y2) / 2;
                 var width = (obj.box.x2 - obj.box.x1);
                 var height = (obj.box.y2 - obj.box.y1);
                 results.Add(new DetectedObject(cx, cy, width, height, obj.class_id, obj.name, obj.confidence));
