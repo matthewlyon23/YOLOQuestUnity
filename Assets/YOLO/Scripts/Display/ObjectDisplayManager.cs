@@ -8,6 +8,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Profiling;
 using YOLOQuestUnity.ObjectDetection;
+using YOLOQuestUnity.PassthroughCamera;
 using YOLOQuestUnity.Utilities;
 
 namespace YOLOQuestUnity.Display
@@ -220,27 +221,35 @@ namespace YOLOQuestUnity.Display
 
         #region Helper Methods
 
-        public (Vector3, Quaternion, float) GetObjectWorldCoordinates(DetectedObject obj)
+        private (Vector3, Quaternion, float) GetObjectWorldCoordinates(DetectedObject obj)
         {
             const int SpreadWidth = 3;
             const int SpreadHeight = 3;
 
-            Vector3 position = Vector3.zero;
-            Quaternion rotation = Quaternion.identity;
-            float hitConfidence = 0;
+            Vector3 position;
+            Quaternion rotation;
+            float hitConfidence = 1;
 
             if (_environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
             {
-                try
+                if (_environmentRaycastManager.Raycast(
+                            PassthroughCameraUtils.ScreenPointToRayInWorld(PassthroughCameraEye.Left,
+                                obj.BoundingBox.center.ToVector2Int()), out var hit))
                 {
-                    return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
+                    position = hit.point;
+                    rotation = Quaternion.LookRotation(hit.normal);
+                    hitConfidence = hit.normalConfidence;
+                }
+                else
+                {
+                    (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
                 }
                 catch
                 {
                     position = ImageToWorldCoordinates(obj.BoundingBox.center);
                 }
             }
-            else position = ImageToWorldCoordinates(obj.BoundingBox.center);
+            else (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
 
             return (position, rotation, hitConfidence);
         }
@@ -316,8 +325,8 @@ namespace YOLOQuestUnity.Display
             Vector2[,] rayPoints = new Vector2[spreadHeight, spreadWidth];
             rayPoints[spreadHeight / 2, spreadWidth / 2] = ImageToScreenCoordinates(obj.BoundingBox.center);
 
-            float yDist = 0.01f * _camera.pixelHeight;
-            float xDist = 0.01f * _camera.pixelWidth;
+            float yDist = 0.01f * _videoFeedManager.GetFeedDimensions().Height;
+            float xDist = 0.01f * _videoFeedManager.GetFeedDimensions().Width;
 
             float currentY = rayPoints[spreadHeight / 2, spreadWidth / 2].y - yDist;
             float currentX = rayPoints[spreadHeight / 2, spreadWidth / 2].x - xDist;
@@ -364,14 +373,14 @@ namespace YOLOQuestUnity.Display
             float spawnDepth = 1.5f;
             if (_sceneLoaded && currentRoom != null)
             {
-                Ray ray = _camera.ScreenPointToRay(new Vector2(newX, newY));
+                Ray ray = _camera.ScreenPointToRay(new Vector2(newX, newY), Camera.MonoOrStereoscopicEye.Left);
                 if (currentRoom.Raycast(ray, 500, out RaycastHit hit, out MRUKAnchor anchor))
                 {
-                    return hit.point;
+                    return (hit.point, Quaternion.LookRotation(hit.normal));
                 }
             }
 
-            return _camera.ScreenToWorldPoint(new Vector3(newX, newY, spawnDepth));
+            return (_camera.ScreenToWorldPoint(new Vector3(newX, newY, spawnDepth)), Quaternion.identity);
         }
 
         private Vector2 ImageToScreenCoordinates(Vector2 coordinates)

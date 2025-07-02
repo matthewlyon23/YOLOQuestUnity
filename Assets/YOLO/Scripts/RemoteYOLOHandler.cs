@@ -22,14 +22,14 @@ namespace YOLOQuestUnity.YOLO
         [MustBeAssigned] [SerializeField] private string m_remoteYOLOProcessorAddress;
         [SerializeField] private YOLOFormat m_YOLOFormat;
         [SerializeField] private YOLOModel m_YOLOModel;
-        [Space(40)]
+        [Space(30f)]
+        [SerializeField] [Range(0f,1f)] private float m_confidenceThreshold = 0.5f;
+        [Space(30f)]
         [MustBeAssigned]
         [SerializeField] [DisplayInspector] private ObjectDisplayManager m_objectDisplayManager;
         [MustBeAssigned] public VideoFeedManager YOLOCamera;
         [MustBeAssigned]
-        [SerializeField] private Camera m_referenceCamera; 
-        [Space(30)]
-        [SerializeField] private float m_confidenceThreshold = 0.5f;
+        [SerializeField] private Camera m_referenceCamera;
 
         private Texture2D m_inputTexture;
         private bool m_inferencePending = false;
@@ -43,7 +43,6 @@ namespace YOLOQuestUnity.YOLO
         
         private void Start()
         {
-
             if (Application.platform == RuntimePlatform.Android)
             {
                 Permission.RequestUserPermission("internet");
@@ -124,7 +123,6 @@ namespace YOLOQuestUnity.YOLO
 
         private async Awaitable<RemoteYOLOResponse> SendRemoteRequest()
         {
-            await Awaitable.BackgroundThreadAsync();
             using HttpRequestMessage request = new(HttpMethod.Post, m_remoteYOLOProcessorAddress) ;
             
             MultipartFormDataContent content = new();
@@ -139,7 +137,6 @@ namespace YOLOQuestUnity.YOLO
             if (!response.IsSuccessStatusCode) throw new HttpRequestException($"Request failed: {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
             
             var responseString = await response.Content.ReadAsStringAsync();
-            await Awaitable.MainThreadAsync();
             return JsonConvert.DeserializeObject<RemoteYOLOResponse>(responseString);
         }
 
@@ -151,7 +148,7 @@ namespace YOLOQuestUnity.YOLO
             {
                 if (obj.confidence < m_confidenceThreshold) continue;
                 var cx = (obj.box.x1 + obj.box.x2) / 2;
-                var cy = m_inputTexture.height - (obj.box.y1 + obj.box.y2) / 2;
+                var cy = (obj.box.y1 + obj.box.y2) / 2;
                 var width = (obj.box.x2 - obj.box.x1);
                 var height = (obj.box.y2 - obj.box.y1);
                 results.Add(new DetectedObject(cx, cy, width, height, obj.class_id, obj.name, obj.confidence));
@@ -195,6 +192,12 @@ namespace YOLOQuestUnity.YOLO
         {
             public Dictionary<int, string> names;
             public RemoteYOLOSpeedMetadata speed;
+            public RemoteYOLORequestMetadata request;
+        }
+
+        private class RemoteYOLORequestMetadata
+        {
+            public float time_ms;
         }
 
         private class RemoteYOLOSpeedMetadata
