@@ -4,6 +4,7 @@ using Meta.XR;
 using Meta.XR.MRUtilityKit;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -40,6 +41,9 @@ namespace YOLOQuestUnity.Display
         [Tooltip("The scaling method to use:\nMIN: Use the minimum of the x and y scale change.\nMAX: Use the maximum of the x and y scale change.\nAVERAGE: Use the average of both the x and y scale change.\nWIDTH: Use the x scale change.\nHEIGHT: Use the y scale change.")]
         [SerializeField] private ScaleType _scaleType = ScaleType.AVERAGE;
 
+        private const float ScaleDampener = 0.3f;
+        
+        
         #endregion
 
         #region External Data Management
@@ -65,7 +69,7 @@ namespace YOLOQuestUnity.Display
 
         private void Start()
         {
-            _activeModels = new();
+            _activeModels = new Dictionary<int, Dictionary<int, GameObject>>();
             SceneManager = FindAnyObjectByType<MRUK>();
             SceneManager.SceneLoadedEvent.AddListener(OnSceneLoad);
             SceneManager.RoomUpdatedEvent.AddListener(OnSceneUpdated);
@@ -108,7 +112,7 @@ namespace YOLOQuestUnity.Display
                 {
                     objectCounts[obj.CocoClass]++;
                 }
-
+                
                 if ((!MovingObjects || objectCounts[obj.CocoClass] > modelList.Count) && ModelCount != MaxModelCount)
                 {
                     var model = Instantiate(_cocoModels[obj.CocoName]);
@@ -179,7 +183,7 @@ namespace YOLOQuestUnity.Display
                 ScaleType.MAX => Math.Max(newWidth / currentWidth, newHeight / currentHeight),
                 _ => 1f
             };
-
+            scaleFactor *= 1f-ScaleDampener;
             if (float.IsInfinity(scaleFactor)) scaleFactor = 1f;
             Debug.Log($"Scale Factor for {obj.CocoName}: {scaleFactor}");
             Vector3 scaleVector = new(scaleFactor, scaleFactor, scaleFactor);
@@ -232,9 +236,10 @@ namespace YOLOQuestUnity.Display
 
             if (_environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
             {
+                var screenPoint = ImageToScreenCoordinates(obj.BoundingBox.center).ToVector2Int();
                 if (_environmentRaycastManager.Raycast(
                             PassthroughCameraUtils.ScreenPointToRayInWorld(PassthroughCameraEye.Left,
-                                obj.BoundingBox.center.ToVector2Int()), out var hit))
+                                screenPoint), out var hit))
                 {
                     position = hit.point;
                     rotation = Quaternion.LookRotation(hit.normal);
@@ -244,10 +249,17 @@ namespace YOLOQuestUnity.Display
                 {
                     (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
                 }
-                catch
-                {
-                    position = ImageToWorldCoordinates(obj.BoundingBox.center);
-                }
+                // return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
+                // var ray = _camera.ScreenPointToRay(obj.BoundingBox.center, Camera.MonoOrStereoscopicEye.Left);
+                // if (_environmentRaycastManager.Raycast(ray, out var hit))
+                // {
+                //     Debug.DrawRay(ray.origin, ray.direction, Color.yellow);
+                //     (position, rotation, hitConfidence) = (hit.point, Quaternion.LookRotation(hit.normal), hit.normalConfidence);
+                // }
+                // else
+                // {
+                //     (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
+                // }
             }
             else (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
 
@@ -362,7 +374,7 @@ namespace YOLOQuestUnity.Display
             return hits;
         }
 
-        private Vector3 ImageToWorldCoordinates(Vector2 coordinates)
+        private (Vector3, Quaternion) ImageToWorldCoordinates(Vector2 coordinates)
         {
 
             Vector3 screenPoint = ImageToScreenCoordinates(coordinates);
@@ -387,8 +399,8 @@ namespace YOLOQuestUnity.Display
         {
             FeedDimensions feedDimensions = _videoFeedManager.GetFeedDimensions();
 
-            float cameraWidthScale = _camera.pixelWidth / feedDimensions.Width;
-            float cameraHeightScale = _camera.pixelHeight / feedDimensions.Height;
+            float cameraWidthScale = _camera.scaledPixelWidth / feedDimensions.Width;
+            float cameraHeightScale = _camera.scaledPixelHeight / feedDimensions.Height;
 
             float newX = coordinates.x * cameraWidthScale;
             float newY = _camera.pixelHeight - coordinates.y * cameraHeightScale;
