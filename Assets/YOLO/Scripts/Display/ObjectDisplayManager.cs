@@ -238,8 +238,16 @@ namespace YOLOQuestUnity.Display
 
             var normalisedXDistanceFromCentre = xDistanceFromCentre / _videoFeedManager.GetFeedDimensions().Width / 2f;
             var normalisedYDistanceFromCentre = yDistanceFromCentre / _videoFeedManager.GetFeedDimensions().Height / 2f;
+
+            var yDistanceMultiplier = 1.5f;
+            var xDistanceMultiplier = 0.95f;
+
+            if (normalisedYDistanceFromCentre < 0)
+            {
+                yDistanceMultiplier *= 4f;
+            }
             
-            var unwarpedPoint = new Vector2((1f-1.2f*normalisedXDistanceFromCentre)*obj.BoundingBox.center.x, (1f-1.2f*normalisedYDistanceFromCentre)*obj.BoundingBox.center.y);
+            var unwarpedPoint = new Vector2((1f-xDistanceMultiplier*normalisedXDistanceFromCentre)*obj.BoundingBox.center.x, (1f-yDistanceMultiplier*normalisedYDistanceFromCentre)*obj.BoundingBox.center.y);
             
             if (_environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
             {

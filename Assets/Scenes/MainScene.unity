@@ -1562,7 +1562,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1bc8cb9795729b458595494dcb541e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_remoteYOLOProcessorAddress: http://remoteyolo.local:44777/api/analyse
+  m_remoteYOLOProcessorAddress: http://remoteyolo.local/api/analyse
   m_YOLOFormat: 0
   m_YOLOModel: 0
   m_confidenceThreshold: 0.8
