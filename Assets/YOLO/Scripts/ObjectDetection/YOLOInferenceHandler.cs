@@ -1,7 +1,10 @@
+using System;
 using System.Collections;
+using System.IO;
 using Unity.Sentis;
 using UnityEngine;
 using YOLOQuestUnity.Inference;
+using YOLOQuestUnity.ObjectDetection.Utilities;
 
 namespace YOLOQuestUnity.ObjectDetection
 {
@@ -10,30 +13,18 @@ namespace YOLOQuestUnity.ObjectDetection
         private readonly TextureAnalyser _textureAnalyser;
         private readonly int _size;
 
-        public YOLOInferenceHandler(ModelAsset modelAsset, ref int size, bool addClassificationHead)
+        private readonly float _iouThreshold = 0.5f;
+        private readonly float _scoreThreshold = 0.5f;
+
+
+        public YOLOInferenceHandler(YOLOModel model, ref int size, BackendType backendType = BackendType.GPUCompute)
         {
-            _model = ModelLoader.Load(modelAsset);
+            _model = model.Model;
 
             if (_model.inputs[0].shape.Get(2) != -1) size = _model.inputs[0].shape.Get(2);
             _size = size;
 
-            if (addClassificationHead)
-            {
-                var graph = new FunctionalGraph();
-
-                var inputs = graph.AddInputs(_model);
-                var outputs = Functional.Forward(_model, inputs);
-
-                var slicedClasses = outputs[0][.., 4..84, ..];
-                var argMaxClasses = Functional.ArgMax(slicedClasses, 1, true);
-                var confidences = Functional.Gather(slicedClasses, 1, argMaxClasses);
-                var slicedPositions = outputs[0][.., 0..4, ..];
-                var concatenated = Functional.Concat(new FunctionalTensor[] { slicedPositions, argMaxClasses.Float(), confidences }, 1);
-
-                _model = graph.Compile(concatenated);
-            }
-
-            _worker = new Worker(_model, BackendType.GPUCompute);
+            _worker = new Worker(_model, backendType);
             _textureAnalyser = new TextureAnalyser(_worker);
         }
 
@@ -72,5 +63,6 @@ namespace YOLOQuestUnity.ObjectDetection
         {
             return _worker.PeekOutput();
         }
+
     }
 }

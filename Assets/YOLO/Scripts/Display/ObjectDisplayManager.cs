@@ -1,3 +1,4 @@
+using MyBox;
 using AYellowpaper.SerializedCollections;
 using Meta.XR;
 using Meta.XR.MRUtilityKit;
@@ -5,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Profiling;
 using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
 
@@ -18,9 +20,9 @@ namespace YOLOQuestUnity.Display
 
         private int _modelCount;
         [Tooltip("The maximum number of models which can spawn at once.")]
-        [SerializeField] private int _maxModelCount = 10;
+        [PositiveValueOnly] [SerializeField] private int _maxModelCount = 10;
         [Tooltip("The minimum distance from an existing model at which a model of the same class can spawn.")]
-        [SerializeField] private float _distanceThreshold = 1f;
+        [PositiveValueOnly] [SerializeField] private float _distanceThreshold = 1f;
 
         [Tooltip("The names of the COCO classes to detect and their associated models.")]
         [SerializeField, SerializedDictionary("Coco Class", "3D Model")]
@@ -42,7 +44,7 @@ namespace YOLOQuestUnity.Display
         #region External Data Management
 
         [Tooltip("The VideoFeedManager used to capture input frames.")]
-        [SerializeField] private VideoFeedManager _videoFeedManager;
+        [MustBeAssigned] [SerializeField] private VideoFeedManager _videoFeedManager;
 
         private Camera _camera;
 
@@ -72,6 +74,8 @@ namespace YOLOQuestUnity.Display
 
         public void DisplayModels(List<DetectedObject> objects, Camera referenceCamera)
         {
+            Profiler.BeginSample("ObjectDisplayManager.DisplayModels");
+
             _camera = referenceCamera;
 
             Dictionary<int, int> objectCounts = new();
@@ -115,7 +119,7 @@ namespace YOLOQuestUnity.Display
                 {
                     if (MovingObjects)
                     {
-                        var model = modelList[objectCounts[obj.CocoClass]-1];
+                        var model = modelList[objectCounts[obj.CocoClass] - 1];
                         UpdateModel(obj, objectCounts[obj.CocoClass], spawnPosition, spawnRotation, model, _environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && hitConfidence >= 0.5f);
                     }
                 }
@@ -143,13 +147,15 @@ namespace YOLOQuestUnity.Display
             //        model.SetActive(false);
             //    }
             //}
+
+            Profiler.EndSample();
         }
 
         #region Model Methods
 
         private void RescaleObject(DetectedObject obj, GameObject model)
         {
-            
+
             Vector3 p3 = obj.BoundingBox.max;
             Vector3 p1 = obj.BoundingBox.min;
 
@@ -172,7 +178,7 @@ namespace YOLOQuestUnity.Display
                 ScaleType.MAX => Math.Max(newWidth / currentWidth, newHeight / currentHeight),
                 _ => 1f
             };
-            
+
             if (float.IsInfinity(scaleFactor)) scaleFactor = 1f;
             Debug.Log($"Scale Factor for {obj.CocoName}: {scaleFactor}");
             Vector3 scaleVector = new(scaleFactor, scaleFactor, scaleFactor);
@@ -201,7 +207,7 @@ namespace YOLOQuestUnity.Display
                 Debug.Log("Distance: " + distance);
                 Debug.Log("Distance id: " + id);
                 var boundingBoxR = Vector3.Distance(model.GetComponentInChildren<MeshRenderer>().bounds.max, model.GetComponentInChildren<MeshRenderer>().bounds.center);
-                if (distance < DistanceThreshold*boundingBoxR)
+                if (distance < DistanceThreshold * boundingBoxR)
                 {
                     return true;
                 }
@@ -227,7 +233,7 @@ namespace YOLOQuestUnity.Display
             {
                 try
                 {
-                return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
+                    return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
                 }
                 catch
                 {
@@ -308,19 +314,19 @@ namespace YOLOQuestUnity.Display
             if (spreadHeight % 2 == 0) spreadHeight += 1;
 
             Vector2[,] rayPoints = new Vector2[spreadHeight, spreadWidth];
-            rayPoints[spreadHeight/2, spreadWidth/2] = ImageToScreenCoordinates(obj.BoundingBox.center);
+            rayPoints[spreadHeight / 2, spreadWidth / 2] = ImageToScreenCoordinates(obj.BoundingBox.center);
 
             float yDist = 0.01f * _camera.pixelHeight;
             float xDist = 0.01f * _camera.pixelWidth;
 
-            float currentY = rayPoints[spreadHeight/2, spreadWidth/2].y - yDist;
-            float currentX = rayPoints[spreadHeight/2, spreadWidth/2].x - xDist;
+            float currentY = rayPoints[spreadHeight / 2, spreadWidth / 2].y - yDist;
+            float currentX = rayPoints[spreadHeight / 2, spreadWidth / 2].x - xDist;
 
             for (int i = 0; i < spreadHeight; i++)
             {
                 for (int j = 0; j < spreadWidth; j++)
                 {
-                    if (i == spreadHeight/2 && j == spreadWidth/2) continue;
+                    if (i == spreadHeight / 2 && j == spreadWidth / 2) continue;
                     rayPoints[i, j] = ImageToScreenCoordinates(new Vector2(currentX, currentY));
                     currentX += xDist;
                 }
@@ -329,7 +335,14 @@ namespace YOLOQuestUnity.Display
                 currentX = rayPoints[spreadHeight / 2, spreadWidth / 2].x - xDist;
             }
 
-            Ray[] rays = rayPoints.Cast<Vector2>().Select(point => _camera.ScreenPointToRay(point)).ToArray();
+            // Replace _camera.ScreenPointToRay with PassthroughCameraUtils.ScreenPointToRayWorld (unclear whether this is ImageToScreenCoordinates converted or not)
+
+            // Very unhappy with this. Will return to it.
+            Ray[] rays = null;
+            //if (_videoFeedManager.GetType() == typeof(WebCamTextureManager)) rays = rayPoints.Cast<Vector2Int>().Select(point => PassthroughCameraUtils.ScreenPointToRayInWorld(((WebCamTextureManager)_videoFeedManager).Eye, point)).ToArray();
+            //else rays = rayPoints.Cast<Vector2>().Select(point => _camera.ScreenPointToRay(point)).ToArray();
+
+            rays = rayPoints.Cast<Vector2>().Select(point => _camera.ScreenPointToRay(point)).ToArray();
 
             EnvironmentRaycastHit[] hits = rays.Select(ray =>
             {
@@ -358,7 +371,7 @@ namespace YOLOQuestUnity.Display
                 }
             }
 
-           return _camera.ScreenToWorldPoint(new Vector3(newX, newY, spawnDepth));
+            return _camera.ScreenToWorldPoint(new Vector3(newX, newY, spawnDepth));
         }
 
         private Vector2 ImageToScreenCoordinates(Vector2 coordinates)
@@ -397,5 +410,5 @@ namespace YOLOQuestUnity.Display
         }
     }
 
-    
+
 }
