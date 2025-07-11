@@ -4,7 +4,6 @@ using Meta.XR;
 using Meta.XR.MRUtilityKit;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -105,7 +104,7 @@ namespace YOLOQuestUnity.Display
                 }
 
                 (Vector3 spawnPosition, Quaternion spawnRotation, float hitConfidence) = GetObjectWorldCoordinates(obj);
-
+                
                 if (IsDuplicate(spawnPosition, modelList)) continue;
 
                 if (!objectCounts.TryAdd(obj.CocoClass, 1))
@@ -233,10 +232,18 @@ namespace YOLOQuestUnity.Display
             Vector3 position;
             Quaternion rotation;
             float hitConfidence = 1;
+            
+            var xDistanceFromCentre = obj.BoundingBox.center.x - _videoFeedManager.GetFeedDimensions().Width/2f;
+            var yDistanceFromCentre = obj.BoundingBox.center.y - _videoFeedManager.GetFeedDimensions().Height/2f;
 
+            var normalisedXDistanceFromCentre = xDistanceFromCentre / _videoFeedManager.GetFeedDimensions().Width / 2f;
+            var normalisedYDistanceFromCentre = yDistanceFromCentre / _videoFeedManager.GetFeedDimensions().Height / 2f;
+            
+            var unwarpedPoint = new Vector2((1f-1.2f*normalisedXDistanceFromCentre)*obj.BoundingBox.center.x, (1f-1.2f*normalisedYDistanceFromCentre)*obj.BoundingBox.center.y);
+            
             if (_environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
             {
-                var screenPoint = ImageToScreenCoordinates(obj.BoundingBox.center).ToVector2Int();
+                var screenPoint = ImageToScreenCoordinates(unwarpedPoint).ToVector2Int();
                 if (_environmentRaycastManager.Raycast(
                             PassthroughCameraUtils.ScreenPointToRayInWorld(PassthroughCameraEye.Left,
                                 screenPoint), out var hit))
@@ -247,7 +254,7 @@ namespace YOLOQuestUnity.Display
                 }
                 else
                 {
-                    (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
+                    (position, rotation) = ImageToWorldCoordinates(unwarpedPoint);
                 }
                 // return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
                 // var ray = _camera.ScreenPointToRay(obj.BoundingBox.center, Camera.MonoOrStereoscopicEye.Left);
@@ -261,7 +268,7 @@ namespace YOLOQuestUnity.Display
                 //     (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
                 // }
             }
-            else (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
+            else (position, rotation) = ImageToWorldCoordinates(unwarpedPoint);
 
             return (position, rotation, hitConfidence);
         }
@@ -399,8 +406,8 @@ namespace YOLOQuestUnity.Display
         {
             FeedDimensions feedDimensions = _videoFeedManager.GetFeedDimensions();
 
-            float cameraWidthScale = _camera.scaledPixelWidth / feedDimensions.Width;
-            float cameraHeightScale = _camera.scaledPixelHeight / feedDimensions.Height;
+            float cameraWidthScale = (float)_camera.scaledPixelWidth / feedDimensions.Width;
+            float cameraHeightScale = (float)_camera.scaledPixelHeight / feedDimensions.Height;
 
             float newX = coordinates.x * cameraWidthScale;
             float newY = _camera.pixelHeight - coordinates.y * cameraHeightScale;
