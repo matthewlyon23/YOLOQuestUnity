@@ -246,6 +246,11 @@ namespace YOLOQuestUnity.Display
             {
                 yDistanceMultiplier *= 4f;
             }
+
+            if (normalisedYDistanceFromCentre < 0)
+            {
+                xDistanceMultiplier *= 3f;
+            }
             
             var unwarpedPoint = new Vector2((1f-xDistanceMultiplier*normalisedXDistanceFromCentre)*obj.BoundingBox.center.x, (1f-yDistanceMultiplier*normalisedYDistanceFromCentre)*obj.BoundingBox.center.y);
             

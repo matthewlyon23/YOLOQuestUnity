@@ -110,8 +110,8 @@ namespace YOLOQuestUnity.YOLO
             await using (StreamWriter sw = new StreamWriter(Path.Join(Application.persistentDataPath, "metrics.txt"), true))
             {
                 await sw.WriteLineAsync("Encode time: " + (jpegEncodeEnd - jpegEncodeStart).TotalMilliseconds + "ms");
-                await sw.WriteLineAsync("Network Time: " + (end - start).TotalMilliseconds);
-                await sw.WriteLineAsync("Inference Time: " + res.metadata.speed.inference);
+                await sw.WriteLineAsync("Network Time: " + (end - start).TotalMilliseconds + "ms");
+                await sw.WriteLineAsync("Inference Time: " + res.metadata.speed.inference + "ms");
             }
 
             m_remoteYOLOResponse = res;
