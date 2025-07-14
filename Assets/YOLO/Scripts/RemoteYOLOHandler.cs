@@ -2,11 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
-using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using MyBox;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.Android;
 using UnityEngine.Experimental.Rendering;
@@ -213,16 +211,6 @@ namespace YOLOQuestUnity.YOLO
             public int class_id;
             public float confidence;
             public RemoteYOLOResultBox box;
-
-            [JsonExtensionData]
-            private IDictionary<string, JToken> m_additionalData;
-
-            [OnDeserialized]
-            private void OnDeserialized(StreamingContext context)
-            {
-                class_id = (int)m_additionalData["class"];
-            }
-
         }
 
         private struct RemoteYOLOResultBox
