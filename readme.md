@@ -19,6 +19,7 @@ The project features several components which provide functionality for a number
 - An object display manager which handles the spawning of models associated objects, defined by a mapping available in the Unity inspector.
 - A YOLO handler which runs inference, manages object display and manages post processing for YOLO11 models.
 - A Remote YOLO handler which manages communication with a [remoteyolo](https://github.com/matthewlyon23/remoteyolo) server, including the uploading of custom models.
+    - When a .pt file is imported it is converted to the correct format to be place in the Custom Model insepctor field.
     - Only compatible with the [remoteyolo](https://github.com/matthewlyon23/remoteyolo) project.
 
 ### Requirements
