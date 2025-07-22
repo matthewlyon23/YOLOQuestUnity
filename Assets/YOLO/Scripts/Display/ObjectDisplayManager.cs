@@ -247,7 +247,7 @@ namespace YOLOQuestUnity.Display
                 yDistanceMultiplier *= 4f;
             }
 
-            if (normalisedYDistanceFromCentre < 0)
+            if (normalisedXDistanceFromCentre < 0)
             {
                 xDistanceMultiplier *= 3f;
             }

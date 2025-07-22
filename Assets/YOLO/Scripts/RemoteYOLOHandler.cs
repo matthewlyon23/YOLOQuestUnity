@@ -19,7 +19,9 @@ namespace YOLOQuestUnity.YOLO
 
         [MustBeAssigned] [SerializeField] private string m_remoteYOLOProcessorAddress;
         [SerializeField] private YOLOFormat m_YOLOFormat;
-        [SerializeField] private YOLOModel m_YOLOModel;
+        [ConditionalField(nameof(m_useCustomModel), true)] [SerializeField] private YOLOModel m_YOLOModel;
+        [ConditionalField(nameof(m_useCustomModel))] [SerializeField] private TextAsset m_customModel;
+        [SerializeField] private bool m_useCustomModel;
         [Space(30f)]
         [SerializeField] [Range(0f,1f)] private float m_confidenceThreshold = 0.5f;
         [Space(30f)]
@@ -49,6 +51,27 @@ namespace YOLOQuestUnity.YOLO
             m_analysisCamera = GetComponent<Camera>();
             File.Delete(Path.Join(Application.persistentDataPath, "metrics.txt"));
             File.Create(Path.Join (Application.persistentDataPath, "metrics.txt")).Close();
+
+            if (m_useCustomModel)
+            {
+                try
+                {
+                    using HttpRequestMessage request = new(HttpMethod.Post, $"http://{m_remoteYOLOProcessorAddress}/api/custom-model") ;
+            
+                    MultipartFormDataContent content = new();
+            
+                    content.Add(new ByteArrayContent(m_customModel.bytes), "model", "model.pt");
+                    request.Content = content;
+            
+                    using HttpResponseMessage response = Client.SendAsync(request).Result;
+                
+                    if (!response.IsSuccessStatusCode) throw new HttpRequestException($"Request failed: {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
+                }
+                catch (Exception e)
+                {
+                    m_useCustomModel = false;
+                }
+            }
         }
 
         private void Update()
@@ -107,13 +130,6 @@ namespace YOLOQuestUnity.YOLO
             var res = await SendRemoteRequest();
             var end = DateTime.Now;
 
-            await using (StreamWriter sw = new StreamWriter(Path.Join(Application.persistentDataPath, "metrics.txt"), true))
-            {
-                await sw.WriteLineAsync("Encode time: " + (jpegEncodeEnd - jpegEncodeStart).TotalMilliseconds + "ms");
-                await sw.WriteLineAsync("Network Time: " + (end - start).TotalMilliseconds + "ms");
-                await sw.WriteLineAsync("Inference Time: " + res.metadata.speed.inference + "ms");
-            }
-
             m_remoteYOLOResponse = res;
             m_inferenceDone = true;
             m_inferencePending = false;
@@ -121,7 +137,7 @@ namespace YOLOQuestUnity.YOLO
 
         private async Awaitable<RemoteYOLOResponse> SendRemoteRequest()
         {
-            using HttpRequestMessage request = new(HttpMethod.Post, m_remoteYOLOProcessorAddress) ;
+            using HttpRequestMessage request = new(HttpMethod.Post, $"http://{m_remoteYOLOProcessorAddress}/api/analyse") ;
             
             MultipartFormDataContent content = new();
             
