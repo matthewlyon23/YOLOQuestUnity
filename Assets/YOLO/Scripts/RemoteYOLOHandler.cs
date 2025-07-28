@@ -75,6 +75,7 @@ namespace YOLOQuestUnity.YOLO
                 }
                 catch (Exception e)
                 {
+                    Debug.LogError("Couldn't upload custom model: " + e.Message);
                     m_useCustomModel = false;
                 }
             }
@@ -88,8 +89,8 @@ namespace YOLOQuestUnity.YOLO
             {
                 if (!m_inferenceDone)
                 {
-                    if (YOLOCamera == null) return;
-                    if ((m_inputTexture = YOLOCamera.GetTexture()) == null) return;
+                    if (!YOLOCamera) return;
+                    if (!(m_inputTexture = YOLOCamera.GetTexture())) return;
                     _ = AnalyseImage(m_inputTexture);
                     m_inferencePending = true;
                     m_analysisCamera.CopyFrom(m_referenceCamera);
@@ -117,8 +118,6 @@ namespace YOLOQuestUnity.YOLO
 
         private async Awaitable AnalyseImage(Texture2D texture)
         {
-            var jpegEncodeStart = DateTime.Now;
-
             var imageConversionThreadParams = new ImageConversionThreadParams
             {
                 imageBuffer = texture.GetRawTextureData(),
@@ -129,16 +128,20 @@ namespace YOLOQuestUnity.YOLO
             };
             
             await Task.Run(() => EncodeImageJPG(imageConversionThreadParams));
-            
-            var jpegEncodeEnd = DateTime.Now;
 
-            var start = DateTime.Now;
-            var res = await SendRemoteRequest();
-            var end = DateTime.Now;
-
-            m_remoteYOLOResponse = res;
-            m_inferenceDone = true;
-            m_inferencePending = false;
+            try
+            {
+                var res = await SendRemoteRequest();
+                m_remoteYOLOResponse = res;
+                m_inferenceDone = true;
+                m_inferencePending = false;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("Couldn't analyse image: " + e.Message);
+                m_inferenceDone = false;
+                m_inferencePending = false;
+            }
         }
 
         private async Awaitable<RemoteYOLOResponse> SendRemoteRequest()
