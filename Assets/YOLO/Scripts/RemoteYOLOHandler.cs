@@ -17,18 +17,24 @@ namespace YOLOQuestUnity.YOLO
     public class RemoteYOLOHandler : MonoBehaviour
     {
 
+        [Tooltip("The network address (including port number if not using standard HTTP port 80) of the device running the remoteyolo processing server.")]
         [MustBeAssigned] [SerializeField] private string m_remoteYOLOProcessorAddress;
         [SerializeField] private YOLOFormat m_YOLOFormat;
         [ConditionalField(nameof(m_useCustomModel), true)] [SerializeField] private YOLOModel m_YOLOModel;
+        [Tooltip("A custom YOLO model in .pt format. This field takes a file with a .bytes extension. Importing a .pt file into the project will automatically convert it to the correct format.")]
         [ConditionalField(nameof(m_useCustomModel))] [SerializeField] private TextAsset m_customModel;
         [SerializeField] private bool m_useCustomModel;
         [Space(30f)]
+        [Tooltip("The threshold below which a detection will be ignored.")]
         [SerializeField] [Range(0f,1f)] private float m_confidenceThreshold = 0.5f;
         [Space(30f)]
         [MustBeAssigned]
+        [Tooltip("The ObjectDisplayManager that will handle the spawning of digital double models.")]
         [SerializeField] [DisplayInspector] private ObjectDisplayManager m_objectDisplayManager;
+        [Tooltip("The VideoFeedManager to analyse frames from.")]
         [MustBeAssigned] public VideoFeedManager YOLOCamera;
         [MustBeAssigned]
+        [Tooltip("The base camera for scene analysis")]
         [SerializeField] private Camera m_referenceCamera;
 
         private Texture2D m_inputTexture;
