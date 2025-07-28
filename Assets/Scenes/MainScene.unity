@@ -990,7 +990,7 @@ MonoBehaviour:
   m_YOLOFormat: 0
   m_YOLOModel: 0
   m_customModel: {fileID: 4900000, guid: ffb0cafddf56a7648b7fff9b7e5fefbb, type: 3}
-  m_useCustomModel: 1
+  m_useCustomModel: 0
   m_confidenceThreshold: 0.8
   m_objectDisplayManager: {fileID: 1951288686}
   YOLOCamera: {fileID: 1246362433}
@@ -1291,12 +1291,8 @@ MonoBehaviour:
       Value: {fileID: 6435767200793775536, guid: eb1d0a7080b6cde4289637b401326a03, type: 3}
     - Key: traffic light
       Value: {fileID: 5024459837109285715, guid: 726804a5d90b22540a06fa4d6aa4a255, type: 3}
-    - Key: motorcycle
-      Value: {fileID: 919132149155446097, guid: 772a82d0f51fa084aa42aaa50e418b79, type: 3}
-    - Key: umbrella
-      Value: {fileID: 919132149155446097, guid: 6a2300f147ae5734badb83315730b4e1, type: 3}
   _movingObjects: 1
-  _scaleType: 3
+  _scaleType: 2
   _videoFeedManager: {fileID: 1246362433}
 --- !u!4 &1951288687
 Transform:
