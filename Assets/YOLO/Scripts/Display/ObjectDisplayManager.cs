@@ -130,29 +130,6 @@ namespace YOLOQuestUnity.Display
                 }
             }
 
-            //foreach (var kv in _activeModels)
-            //{
-            //    if (!objectCounts.ContainsKey(kv.Key))
-            //    {
-            //        foreach (var obj in kv.Value)
-            //        {
-            //            Destroy(obj.Value);
-            //        }
-            //        ModelCount -= kv.Value.Count;
-            //        _activeModels[kv.Key] = new Dictionary<int, GameObject>();
-            //        continue;
-            //    }
-
-            //    var modelList = kv.Value;
-            //    var cocoClass = kv.Key;
-
-            //    for (int i = objectCounts[cocoClass]; i < modelList.Count; i++)
-            //    {
-            //        var model = modelList[i];
-            //        model.SetActive(false);
-            //    }
-            //}
-
             Profiler.EndSample();
         }
 

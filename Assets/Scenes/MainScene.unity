@@ -1270,7 +1270,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _maxModelCount: 5
-  _distanceThreshold: 0
+  _distanceThreshold: 0.2
   _cocoModels:
     _serializedList:
     - Key: tv
