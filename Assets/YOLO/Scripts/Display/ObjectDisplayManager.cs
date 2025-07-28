@@ -164,11 +164,8 @@ namespace YOLOQuestUnity.Display
             Vector3 p3 = obj.BoundingBox.max;
             Vector3 p1 = obj.BoundingBox.min;
 
-            // Vector3 sP3 = ImageToScreenCoordinates(p3);
-            // Vector3 sP1 = ImageToScreenCoordinates(p1);
-
-            Vector3 sP3 = p3;
-            Vector3 sP1 = p1;
+            Vector3 sP3 = ImageToScreenCoordinates(p3);
+            Vector3 sP1 = ImageToScreenCoordinates(p1);
 
             float newHeight = Math.Abs(sP3.y - sP1.y);
             float newWidth = Math.Abs(sP3.x - sP1.x);
@@ -209,8 +206,6 @@ namespace YOLOQuestUnity.Display
             foreach (var (id, model) in modelList)
             {
                 var distance = Vector3.Distance(spawnPosition, model.transform.position);
-                Debug.Log("Distance: " + distance);
-                Debug.Log("Distance id: " + id);
                 var boundingBoxR = Vector3.Distance(model.GetComponentInChildren<MeshRenderer>().bounds.max, model.GetComponentInChildren<MeshRenderer>().bounds.center);
                 if (distance < DistanceThreshold * boundingBoxR)
                 {
@@ -231,11 +226,12 @@ namespace YOLOQuestUnity.Display
             Quaternion rotation;
             float hitConfidence = 1;
             
-            if (_environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
+            if (_environmentRaycastManager && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
             {
                 var screenPoint = ImageToScreenCoordinates(obj.BoundingBox.center);
+                // If you use Camera.MonoOrStereoscopicEye.Left then objects display off centre, even though the view is from the left eye, and the whole point of that flag is to account for that. Oh, also it's offset in the Y by about 200 pixels for some reason when you use Mono.
                 if (_environmentRaycastManager.Raycast(
-                            _camera.ScreenPointToRay(screenPoint, Camera.MonoOrStereoscopicEye.Mono), out var hit))
+                            _camera.ScreenPointToRay(screenPoint, Camera.MonoOrStereoscopicEye.Mono), out var hit)) 
                 {
                     position = hit.point;
                     rotation = Quaternion.LookRotation(hit.normal);
@@ -245,17 +241,6 @@ namespace YOLOQuestUnity.Display
                 {
                     (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
                 }
-                // return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
-                // var ray = _camera.ScreenPointToRay(obj.BoundingBox.center, Camera.MonoOrStereoscopicEye.Left);
-                // if (_environmentRaycastManager.Raycast(ray, out var hit))
-                // {
-                //     Debug.DrawRay(ray.origin, ray.direction, Color.yellow);
-                //     (position, rotation, hitConfidence) = (hit.point, Quaternion.LookRotation(hit.normal), hit.normalConfidence);
-                // }
-                // else
-                // {
-                //     (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
-                // }
             }
             else (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
 
@@ -352,14 +337,7 @@ namespace YOLOQuestUnity.Display
                 currentX = rayPoints[spreadHeight / 2, spreadWidth / 2].x - xDist;
             }
 
-            // Replace _camera.ScreenPointToRay with PassthroughCameraUtils.ScreenPointToRayWorld (unclear whether this is ImageToScreenCoordinates converted or not)
-
-            // Very unhappy with this. Will return to it.
-            Ray[] rays = null;
-            //if (_videoFeedManager.GetType() == typeof(WebCamTextureManager)) rays = rayPoints.Cast<Vector2Int>().Select(point => PassthroughCameraUtils.ScreenPointToRayInWorld(((WebCamTextureManager)_videoFeedManager).Eye, point)).ToArray();
-            //else rays = rayPoints.Cast<Vector2>().Select(point => _camera.ScreenPointToRay(point)).ToArray();
-
-            rays = rayPoints.Cast<Vector2>().Select(point => _camera.ScreenPointToRay(point)).ToArray();
+            Ray[] rays = rayPoints.Cast<Vector2>().Select(point => _camera.ScreenPointToRay(point)).ToArray();
 
             EnvironmentRaycastHit[] hits = rays.Select(ray =>
             {
@@ -392,14 +370,6 @@ namespace YOLOQuestUnity.Display
         private Vector2 ImageToScreenCoordinates(Vector2 coordinates)
         {
             FeedDimensions feedDimensions = _videoFeedManager.GetFeedDimensions();
-            
-            // float cameraWidthScale = (float)_camera.scaledPixelWidth / feedDimensions.Width;
-            // float cameraHeightScale = (float)_camera.scaledPixelHeight / feedDimensions.Height;
-            //
-            // float newX = coordinates.x * cameraWidthScale;
-            // float newY = _camera.pixelHeight - coordinates.y * cameraHeightScale;
-            //
-            // return new Vector2(newX, newY);
 
             var xOffset = (_camera.scaledPixelWidth - feedDimensions.Width) / 2f;
             var yOffset = (_camera.scaledPixelHeight - feedDimensions.Height) / 2f;
@@ -407,6 +377,7 @@ namespace YOLOQuestUnity.Display
             var newX = coordinates.x + xOffset;
             var newY = (feedDimensions.Height - coordinates.y) + yOffset;
 
+            // 200 pixel offset when using the Camera.MonoOrStereoscopicEye.Mono flag.
             return new Vector2(newX, newY-200f);
             
         }
