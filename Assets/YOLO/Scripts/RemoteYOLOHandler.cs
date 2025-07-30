@@ -24,10 +24,10 @@ namespace YOLOQuestUnity.YOLO
         [ConditionalField(nameof(m_useCustomModel), true)] [SerializeField] private YOLOModel m_YOLOModel;
         [Tooltip("A custom YOLO model in .pt format. This field takes a file with a .bytes extension. Importing a .pt file into the project will automatically convert it to the correct format.")]
         [ConditionalField(nameof(m_useCustomModel))] [SerializeField] private TextAsset m_customModel;
-        [SerializeField] private bool m_useCustomModel;
+        [SerializeField] public bool m_useCustomModel;
         [Space(30f)]
         [Tooltip("The threshold below which a detection will be ignored.")]
-        [SerializeField] [Range(0f,1f)] private float m_confidenceThreshold = 0.5f;
+        [SerializeField] [Range(0f,1f)] public float m_confidenceThreshold = 0.5f;
         [Space(30f)]
         [MustBeAssigned]
         [Tooltip("The ObjectDisplayManager that will handle the spawning of digital double models.")]
@@ -104,6 +104,21 @@ namespace YOLOQuestUnity.YOLO
             }
         }
 
+        public async Awaitable UploadCustomModelAsync()
+        {
+            try
+            {
+                await m_remoteYOLOClient.UploadCustomModelAsync(m_customModel.bytes);
+                m_useCustomModel = true;
+                Debug.Log("Using custom model");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("Couldn't upload custom model: " + e.Message);
+                m_useCustomModel = false;
+            }
+        }
+
         private void EncodeImageJPG(object paras)
         {
             var p = (ImageConversionThreadParams)paras;
@@ -161,64 +176,6 @@ namespace YOLOQuestUnity.YOLO
             public uint height;
             public int quality;
         }
-
-        private enum YOLOFormat
-        {
-            NCNN,
-            ONNX,
-            PYTORCH
-        }
-
-        private enum YOLOModel
-        {
-            YOLO11N,
-            YOLO11S,
-            YOLO11M,
-            YOLO11L
-        }
-
-        private class RemoteYOLOResponse
-        {
-            public bool success;
-            public RemoteYOLOMetadata metadata;
-            public RemoteYOLOPredictionResult[] result;
-        }
-
-        private class RemoteYOLOMetadata
-        {
-            public Dictionary<int, string> names;
-            public RemoteYOLOSpeedMetadata speed;
-            public RemoteYOLORequestMetadata request;
-        }
-
-        private class RemoteYOLORequestMetadata
-        {
-            public float time_ms;
-        }
-
-        private class RemoteYOLOSpeedMetadata
-        {
-            public float preprocess;
-            public float inference;
-            public float postprocess;
-        }
-
-        private class RemoteYOLOPredictionResult
-        {
-            public string name;
-            public int class_id;
-            public float confidence;
-            public RemoteYOLOResultBox box;
-        }
-
-        private struct RemoteYOLOResultBox
-        {
-            public float x1;
-            public float y1;
-            public float x2;
-            public float y2;
-        }
-
     }
 
        
