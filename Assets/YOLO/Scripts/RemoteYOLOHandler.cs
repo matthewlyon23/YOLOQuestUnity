@@ -58,20 +58,13 @@ namespace YOLOQuestUnity.YOLO
             File.Delete(Path.Join(Application.persistentDataPath, "metrics.txt"));
             File.Create(Path.Join (Application.persistentDataPath, "metrics.txt")).Close();
 
+            m_remoteYOLOClient = new RemoteYOLOClient(m_remoteYOLOProcessorAddress);
+            
             if (m_useCustomModel)
             {
                 try
                 {
-                    using HttpRequestMessage request = new(HttpMethod.Post, $"http://{m_remoteYOLOProcessorAddress}/api/custom-model") ;
-            
-                    MultipartFormDataContent content = new();
-            
-                    content.Add(new ByteArrayContent(m_customModel.bytes), "model", "model.pt");
-                    request.Content = content;
-            
-                    using HttpResponseMessage response = Client.SendAsync(request).Result;
-                
-                    if (!response.IsSuccessStatusCode) throw new HttpRequestException($"Request failed: {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
+                    m_remoteYOLOClient.UploadCustomModel(m_customModel.bytes);
                 }
                 catch (Exception e)
                 {
@@ -131,8 +124,7 @@ namespace YOLOQuestUnity.YOLO
 
             try
             {
-                var res = await SendRemoteRequest();
-                m_remoteYOLOResponse = res;
+                m_remoteYOLOResponse = await m_remoteYOLOClient.AnalyseAsync(m_imageData, m_YOLOModel, m_YOLOFormat, m_useCustomModel);
                 m_inferenceDone = true;
                 m_inferencePending = false;
             }
@@ -144,30 +136,10 @@ namespace YOLOQuestUnity.YOLO
             }
         }
 
-        private async Awaitable<RemoteYOLOResponse> SendRemoteRequest()
-        {
-            using HttpRequestMessage request = new(HttpMethod.Post, $"http://{m_remoteYOLOProcessorAddress}/api/analyse") ;
-            
-            MultipartFormDataContent content = new();
-            
-            content.Add(new StringContent(m_YOLOFormat.ToString().ToLower()), "format");
-            content.Add(new StringContent(m_YOLOModel.ToString().ToLower()), "model");
-            content.Add(new ByteArrayContent(m_imageData), "image", "image.jpg");
-            request.Content = content;
-            
-            using HttpResponseMessage response = await Client.SendAsync(request);
-                
-            if (!response.IsSuccessStatusCode) throw new HttpRequestException($"Request failed: {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
-            
-            var responseString = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<RemoteYOLOResponse>(responseString);
-        }
-
-        private List<DetectedObject> Postprocess(RemoteYOLOResponse response)
+        private List<DetectedObject> Postprocess(RemoteYOLOAnalyseResponse response)
         {
             List<DetectedObject> results = new();
-
-            foreach (RemoteYOLOPredictionResult obj in response.result)
+            foreach (RemoteYOLOAnalysePredictionResult obj in response.result)
             {
                 if (obj.confidence < m_confidenceThreshold) continue;
                 var cx = (obj.box.x1 + obj.box.x2) / 2;
