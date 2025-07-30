@@ -97,19 +97,22 @@ namespace YOLOQuestUnity.YOLO.RemoteYOLO
         /// <summary>
         /// Sends an asynchronous request to the /api/analyse endpoint.
         /// </summary>
+        /// <param name="imageData">The JPG encoded image data to analyse.</param>
         /// <param name="yoloModel">The YOLO Model to use. For options, see <see cref="YOLOModel"/></param>
         /// <param name="yoloFormat">The YOLO Format to use. For options, see <see cref="YOLOFormat"/></param>
-        /// <param name="imageData">The JPG encoded image data to analyse.</param>
+        /// <param name="useCustomModel">Sets whether the currently uploaded custom model should be used. Does not upload any model, therefore one must already exist on the server for this option to work correctly.</param>
         /// <returns>An <see cref="Awaitable"/>&lt;<see cref="RemoteYOLOAnalyseResponse"/>&gt; confroming to the response schema.</returns>
         /// <exception cref="HttpRequestException">Throws an HttpRequestException on failure status code. The message field contains the error message from the server, if one exists.</exception>
-        public async Awaitable<RemoteYOLOAnalyseResponse> AnalyseAsync(YOLOModel yoloModel, YOLOFormat yoloFormat, byte[] imageData)
+        public async Awaitable<RemoteYOLOAnalyseResponse> AnalyseAsync(byte[] imageData, YOLOModel yoloModel = YOLOModel.YOLO11N, YOLOFormat yoloFormat = YOLOFormat.NCNN, bool useCustomModel = false)
         {
             using HttpRequestMessage request = new(HttpMethod.Post, $"http://{BaseAddress}{_analyseEndpoint}");
             
             MultipartFormDataContent content = new();
             
             content.Add(new StringContent(yoloFormat.ToString().ToLower()), "format");
-            content.Add(new StringContent(yoloModel.ToString().ToLower()), "model");
+            content.Add(
+                useCustomModel ? new StringContent("custom") : new StringContent(yoloModel.ToString().ToLower()),
+                "model");
             content.Add(new ByteArrayContent(imageData), "image", "image.jpg");
             request.Content = content;
             
@@ -126,23 +129,26 @@ namespace YOLOQuestUnity.YOLO.RemoteYOLO
             var responseString = await response.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<RemoteYOLOAnalyseResponse>(responseString);
         }
-        
+
         /// <summary>
         /// Sends a request to the /api/analyse endpoint.
         /// </summary>
+        /// <param name="imageData">The JPG encoded image data to analyse.</param>
         /// <param name="yoloModel">The YOLO Model to use. For options, see <see cref="YOLOModel"/></param>
         /// <param name="yoloFormat">The YOLO Format to use. For options, see <see cref="YOLOFormat"/></param>
-        /// <param name="imageData">The JPG encoded image data to analyse.</param>
+        /// <param name="useCustomModel">Sets whether the currently uploaded custom model should be used. Does not upload any model, therefore one must already exist on the server for this option to work correctly.</param>
         /// <returns>A <see cref="RemoteYOLOAnalyseResponse"/> conforming to the response schema.</returns>
         /// <exception cref="HttpRequestException">Throws an HttpRequestException on failure status code. The message field contains the error message from the server, if one exists.</exception>
-        public RemoteYOLOAnalyseResponse Analyse(YOLOModel yoloModel, YOLOFormat yoloFormat, byte[] imageData)
+        public RemoteYOLOAnalyseResponse Analyse(byte[] imageData, YOLOModel yoloModel = YOLOModel.YOLO11N, YOLOFormat yoloFormat = YOLOFormat.NCNN, bool useCustomModel = false)
         {
             using HttpRequestMessage request = new(HttpMethod.Post, $"http://{BaseAddress}{_analyseEndpoint}");
             
             MultipartFormDataContent content = new();
             
             content.Add(new StringContent(yoloFormat.ToString().ToLower()), "format");
-            content.Add(new StringContent(yoloModel.ToString().ToLower()), "model");
+            content.Add(
+                useCustomModel ? new StringContent("custom") : new StringContent(yoloModel.ToString().ToLower()),
+                "model");            
             content.Add(new ByteArrayContent(imageData), "image", "image.jpg");
             request.Content = content;
             
