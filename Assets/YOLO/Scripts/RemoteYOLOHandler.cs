@@ -19,9 +19,10 @@ namespace YOLOQuestUnity.YOLO
     {
 
         [Tooltip("The network address (including port number if not using standard HTTP port 80) of the device running the remoteyolo processing server.")]
-        [MustBeAssigned] [SerializeField] private string m_remoteYOLOProcessorAddress;
+        [MustBeAssigned] [SerializeField]
+        public string m_remoteYOLOProcessorAddress;
         [SerializeField] private YOLOFormat m_YOLOFormat;
-        [ConditionalField(nameof(m_useCustomModel), true)] [SerializeField] private YOLOModel m_YOLOModel;
+        [ConditionalField(nameof(m_useCustomModel), true)] [SerializeField] public YOLOModel m_YOLOModel;
         [Tooltip("A custom YOLO model in .pt format. This field takes a file with a .bytes extension. Importing a .pt file into the project will automatically convert it to the correct format.")]
         [ConditionalField(nameof(m_useCustomModel))] [SerializeField] private TextAsset m_customModel;
         [SerializeField] public bool m_useCustomModel;
@@ -44,7 +45,7 @@ namespace YOLOQuestUnity.YOLO
         private RemoteYOLOAnalyseResponse m_remoteYOLOResponse;
         private Camera m_analysisCamera;
 
-        private RemoteYOLOClient m_remoteYOLOClient;
+        public RemoteYOLOClient m_remoteYOLOClient;
         
         private byte[] m_imageData;
         
@@ -127,6 +128,7 @@ namespace YOLOQuestUnity.YOLO
 
         private async Awaitable AnalyseImage(Texture2D texture)
         {
+            Debug.Log("Using model: " + m_YOLOModel);
             var imageConversionThreadParams = new ImageConversionThreadParams
             {
                 imageBuffer = texture.GetRawTextureData(),
