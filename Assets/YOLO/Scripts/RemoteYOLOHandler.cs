@@ -11,6 +11,7 @@ using UnityEngine.Experimental.Rendering;
 using YOLOQuestUnity.Display;
 using YOLOQuestUnity.ObjectDetection;
 using YOLOQuestUnity.Utilities;
+using YOLOQuestUnity.YOLO.RemoteYOLO;
 
 namespace YOLOQuestUnity.YOLO
 {
@@ -40,10 +41,10 @@ namespace YOLOQuestUnity.YOLO
         private Texture2D m_inputTexture;
         private bool m_inferencePending = false;
         private bool m_inferenceDone = false;
-        private RemoteYOLOResponse m_remoteYOLOResponse;
+        private RemoteYOLOAnalyseResponse m_remoteYOLOResponse;
         private Camera m_analysisCamera;
 
-        private static readonly HttpClient Client = new();
+        private RemoteYOLOClient m_remoteYOLOClient;
         
         private byte[] m_imageData;
         
@@ -53,7 +54,7 @@ namespace YOLOQuestUnity.YOLO
             {
                 Permission.RequestUserPermission("internet");
             }
-
+            
             m_analysisCamera = GetComponent<Camera>();
             File.Delete(Path.Join(Application.persistentDataPath, "metrics.txt"));
             File.Create(Path.Join (Application.persistentDataPath, "metrics.txt")).Close();
