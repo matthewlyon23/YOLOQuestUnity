@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
 using System.Threading.Tasks;
 using MyBox;
-using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Android;
 using UnityEngine.Experimental.Rendering;
@@ -161,64 +159,6 @@ namespace YOLOQuestUnity.YOLO
             public uint height;
             public int quality;
         }
-
-        private enum YOLOFormat
-        {
-            NCNN,
-            ONNX,
-            PYTORCH
-        }
-
-        private enum YOLOModel
-        {
-            YOLO11N,
-            YOLO11S,
-            YOLO11M,
-            YOLO11L
-        }
-
-        private class RemoteYOLOResponse
-        {
-            public bool success;
-            public RemoteYOLOMetadata metadata;
-            public RemoteYOLOPredictionResult[] result;
-        }
-
-        private class RemoteYOLOMetadata
-        {
-            public Dictionary<int, string> names;
-            public RemoteYOLOSpeedMetadata speed;
-            public RemoteYOLORequestMetadata request;
-        }
-
-        private class RemoteYOLORequestMetadata
-        {
-            public float time_ms;
-        }
-
-        private class RemoteYOLOSpeedMetadata
-        {
-            public float preprocess;
-            public float inference;
-            public float postprocess;
-        }
-
-        private class RemoteYOLOPredictionResult
-        {
-            public string name;
-            public int class_id;
-            public float confidence;
-            public RemoteYOLOResultBox box;
-        }
-
-        private struct RemoteYOLOResultBox
-        {
-            public float x1;
-            public float y1;
-            public float x2;
-            public float y2;
-        }
-
     }
 
        
