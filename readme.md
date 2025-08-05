@@ -18,6 +18,9 @@ The project features several components which provide functionality for a number
 - A detected object class which provides information about an object identified by a model.
 - An object display manager which handles the spawning of models associated objects, defined by a mapping available in the Unity inspector.
 - A YOLO handler which runs inference, manages object display and manages post processing for YOLO11 models.
+- A Remote YOLO handler which manages communication with a [remoteyolo](https://github.com/matthewlyon23/remoteyolo) server, including the uploading of custom models.
+    - When a .pt file is imported it is converted to the correct format to be place in the Custom Model insepctor field.
+    - Only compatible with the [remoteyolo](https://github.com/matthewlyon23/remoteyolo) project.
 
 ### Requirements
 
@@ -59,11 +62,14 @@ To ensure best compatibility, use the Meta Project Validation Tool to set all se
 
 ObjectDisplayManager:
 - The scene must use the [OVR Camera Rig](https://developers.meta.com/horizon/documentation/unity/unity-ovrcamerarig/) from the Oculus plugin as the main camera.
-- The XR Plugin must be set to Oculus.
+- The XR Plugin must be set to Oculus, and Oculus XR must be the only installed XR Plugin.
 - An EnvironmentRaycastManager from the [Meta MR Utility Kit](https://developer.oculus.com/documentation/unity/unity-meta-mr-utility-kit/) must be added to the object containing the ObjectDisplayManager
 
 YOLOHandler:
 - The object containing the YOLO Handler must also contain one Camera component (not any of the AR cameras).
+
+RemoteYOLOHandler:
+- The object containing the Remote YOLO Handler must also contain one Camera component (not any of the AR cameras).
 
 PassthroughManager:
 - The `allow unsafe code` option must be selected in the player settings.

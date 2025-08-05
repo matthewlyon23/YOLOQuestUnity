@@ -4,6 +4,7 @@ using System.Collections;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Experimental.Rendering;
 using YOLOQuestUnity.Utilities;
 
 namespace YOLOQuestUnity.PassthroughCamera
@@ -15,6 +16,7 @@ namespace YOLOQuestUnity.PassthroughCamera
                                  "When set to (0,0), the highest supported resolution will be used.")]
         public Vector2Int RequestedResolution;
         private FeedDimensions m_feedDimensions;
+        private Texture2D m_currentTexture;
 
         /// <summary>
         /// Returns <see cref="WebCamTexture"/> reference if required permissions were granted and this component is enabled. Else, returns null.
@@ -126,12 +128,13 @@ namespace YOLOQuestUnity.PassthroughCamera
 
         public override Texture2D GetTexture()
         {
-            if (WebCamTexture is null) return null;
-
-            Texture2D texture = new(WebCamTexture.width, WebCamTexture.height, WebCamTexture.graphicsFormat, UnityEngine.Experimental.Rendering.TextureCreationFlags.None);
-            texture.SetPixels32(WebCamTexture.GetPixels32());
-            texture.Apply();
-            return texture;
+            if (WebCamTexture == null) return null;
+            
+            Destroy(m_currentTexture);
+            m_currentTexture = new Texture2D(WebCamTexture.width, WebCamTexture.height, WebCamTexture.graphicsFormat, TextureCreationFlags.None);
+            m_currentTexture.SetPixels32(WebCamTexture.GetPixels32());
+            m_currentTexture.Apply();
+            return m_currentTexture;
         }
 
         public override FeedDimensions GetFeedDimensions()

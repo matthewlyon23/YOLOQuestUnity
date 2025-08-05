@@ -4,10 +4,12 @@ using Meta.XR;
 using Meta.XR.MRUtilityKit;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Profiling;
 using YOLOQuestUnity.ObjectDetection;
+using YOLOQuestUnity.PassthroughCamera;
 using YOLOQuestUnity.Utilities;
 
 namespace YOLOQuestUnity.Display
@@ -39,6 +41,9 @@ namespace YOLOQuestUnity.Display
         [Tooltip("The scaling method to use:\nMIN: Use the minimum of the x and y scale change.\nMAX: Use the maximum of the x and y scale change.\nAVERAGE: Use the average of both the x and y scale change.\nWIDTH: Use the x scale change.\nHEIGHT: Use the y scale change.")]
         [SerializeField] private ScaleType _scaleType = ScaleType.AVERAGE;
 
+        private const float ScaleDampener = 0f;
+        
+        
         #endregion
 
         #region External Data Management
@@ -54,7 +59,7 @@ namespace YOLOQuestUnity.Display
 
         private MRUK _mruk;
         private MRUK SceneManager { get => _mruk; set => _mruk = value; }
-        private MRUKRoom currentRoom = null;
+        private MRUKRoom _currentRoom = null;
 
         private EnvironmentRaycastManager _environmentRaycastManager;
 
@@ -64,7 +69,7 @@ namespace YOLOQuestUnity.Display
 
         private void Start()
         {
-            _activeModels = new();
+            _activeModels = new Dictionary<int, Dictionary<int, GameObject>>();
             SceneManager = FindAnyObjectByType<MRUK>();
             SceneManager.SceneLoadedEvent.AddListener(OnSceneLoad);
             SceneManager.RoomUpdatedEvent.AddListener(OnSceneUpdated);
@@ -100,14 +105,14 @@ namespace YOLOQuestUnity.Display
                 }
 
                 (Vector3 spawnPosition, Quaternion spawnRotation, float hitConfidence) = GetObjectWorldCoordinates(obj);
-
+                
                 if (IsDuplicate(spawnPosition, modelList)) continue;
 
                 if (!objectCounts.TryAdd(obj.CocoClass, 1))
                 {
                     objectCounts[obj.CocoClass]++;
                 }
-
+                
                 if ((!MovingObjects || objectCounts[obj.CocoClass] > modelList.Count) && ModelCount != MaxModelCount)
                 {
                     var model = Instantiate(_cocoModels[obj.CocoName]);
@@ -124,29 +129,6 @@ namespace YOLOQuestUnity.Display
                     }
                 }
             }
-
-            //foreach (var kv in _activeModels)
-            //{
-            //    if (!objectCounts.ContainsKey(kv.Key))
-            //    {
-            //        foreach (var obj in kv.Value)
-            //        {
-            //            Destroy(obj.Value);
-            //        }
-            //        ModelCount -= kv.Value.Count;
-            //        _activeModels[kv.Key] = new Dictionary<int, GameObject>();
-            //        continue;
-            //    }
-
-            //    var modelList = kv.Value;
-            //    var cocoClass = kv.Key;
-
-            //    for (int i = objectCounts[cocoClass]; i < modelList.Count; i++)
-            //    {
-            //        var model = modelList[i];
-            //        model.SetActive(false);
-            //    }
-            //}
 
             Profiler.EndSample();
         }
@@ -173,12 +155,12 @@ namespace YOLOQuestUnity.Display
             {
                 ScaleType.WIDTH => newWidth / currentWidth,
                 ScaleType.HEIGHT => newHeight / currentHeight,
-                ScaleType.AVERAGE => ((newWidth / currentWidth) + (newHeight / currentHeight)) / 2,
+                ScaleType.AVERAGE => ((newWidth / currentWidth) + (newHeight / currentHeight)) / 2f,
                 ScaleType.MIN => Math.Min(newWidth / currentWidth, newHeight / currentHeight),
                 ScaleType.MAX => Math.Max(newWidth / currentWidth, newHeight / currentHeight),
                 _ => 1f
             };
-
+            scaleFactor *= 1f-ScaleDampener;
             if (float.IsInfinity(scaleFactor)) scaleFactor = 1f;
             Debug.Log($"Scale Factor for {obj.CocoName}: {scaleFactor}");
             Vector3 scaleVector = new(scaleFactor, scaleFactor, scaleFactor);
@@ -200,12 +182,7 @@ namespace YOLOQuestUnity.Display
         {
             foreach (var (id, model) in modelList)
             {
-                // if "close enough" to new model, don't add
-                // Euclidian distance?
-
                 var distance = Vector3.Distance(spawnPosition, model.transform.position);
-                Debug.Log("Distance: " + distance);
-                Debug.Log("Distance id: " + id);
                 var boundingBoxR = Vector3.Distance(model.GetComponentInChildren<MeshRenderer>().bounds.max, model.GetComponentInChildren<MeshRenderer>().bounds.center);
                 if (distance < DistanceThreshold * boundingBoxR)
                 {
@@ -220,27 +197,29 @@ namespace YOLOQuestUnity.Display
 
         #region Helper Methods
 
-        public (Vector3, Quaternion, float) GetObjectWorldCoordinates(DetectedObject obj)
+        private (Vector3, Quaternion, float) GetObjectWorldCoordinates(DetectedObject obj)
         {
-            const int SpreadWidth = 3;
-            const int SpreadHeight = 3;
-
-            Vector3 position = Vector3.zero;
-            Quaternion rotation = Quaternion.identity;
-            float hitConfidence = 0;
-
-            if (_environmentRaycastManager != null && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
+            Vector3 position;
+            Quaternion rotation;
+            float hitConfidence = 1;
+            
+            if (_environmentRaycastManager && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
             {
-                try
+                var screenPoint = ImageToScreenCoordinates(obj.BoundingBox.center);
+                // If you use Camera.MonoOrStereoscopicEye.Left then objects display off centre, even though the view is from the left eye, and the whole point of that flag is to account for that. Oh, also it's offset in the Y by about 200 pixels for some reason when you use Mono.
+                if (_environmentRaycastManager.Raycast(
+                            _camera.ScreenPointToRay(screenPoint, Camera.MonoOrStereoscopicEye.Mono), out var hit)) 
                 {
-                    return AverageRaycastHits(FireRaycastSpread(obj, SpreadWidth, SpreadHeight));
+                    position = hit.point;
+                    rotation = Quaternion.LookRotation(hit.normal);
+                    hitConfidence = hit.normalConfidence;
                 }
-                catch
+                else
                 {
-                    position = ImageToWorldCoordinates(obj.BoundingBox.center);
+                    (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
                 }
             }
-            else position = ImageToWorldCoordinates(obj.BoundingBox.center);
+            else (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
 
             return (position, rotation, hitConfidence);
         }
@@ -316,8 +295,8 @@ namespace YOLOQuestUnity.Display
             Vector2[,] rayPoints = new Vector2[spreadHeight, spreadWidth];
             rayPoints[spreadHeight / 2, spreadWidth / 2] = ImageToScreenCoordinates(obj.BoundingBox.center);
 
-            float yDist = 0.01f * _camera.pixelHeight;
-            float xDist = 0.01f * _camera.pixelWidth;
+            float yDist = 0.01f * _videoFeedManager.GetFeedDimensions().Height;
+            float xDist = 0.01f * _videoFeedManager.GetFeedDimensions().Width;
 
             float currentY = rayPoints[spreadHeight / 2, spreadWidth / 2].y - yDist;
             float currentX = rayPoints[spreadHeight / 2, spreadWidth / 2].x - xDist;
@@ -335,14 +314,7 @@ namespace YOLOQuestUnity.Display
                 currentX = rayPoints[spreadHeight / 2, spreadWidth / 2].x - xDist;
             }
 
-            // Replace _camera.ScreenPointToRay with PassthroughCameraUtils.ScreenPointToRayWorld (unclear whether this is ImageToScreenCoordinates converted or not)
-
-            // Very unhappy with this. Will return to it.
-            Ray[] rays = null;
-            //if (_videoFeedManager.GetType() == typeof(WebCamTextureManager)) rays = rayPoints.Cast<Vector2Int>().Select(point => PassthroughCameraUtils.ScreenPointToRayInWorld(((WebCamTextureManager)_videoFeedManager).Eye, point)).ToArray();
-            //else rays = rayPoints.Cast<Vector2>().Select(point => _camera.ScreenPointToRay(point)).ToArray();
-
-            rays = rayPoints.Cast<Vector2>().Select(point => _camera.ScreenPointToRay(point)).ToArray();
+            Ray[] rays = rayPoints.Cast<Vector2>().Select(point => _camera.ScreenPointToRay(point)).ToArray();
 
             EnvironmentRaycastHit[] hits = rays.Select(ray =>
             {
@@ -353,49 +325,49 @@ namespace YOLOQuestUnity.Display
             return hits;
         }
 
-        private Vector3 ImageToWorldCoordinates(Vector2 coordinates)
+        private (Vector3, Quaternion) ImageToWorldCoordinates(Vector2 coordinates)
         {
 
-            Vector3 screenPoint = ImageToScreenCoordinates(coordinates);
-
-            float newX = screenPoint.x;
-            float newY = screenPoint.y;
-
-            float spawnDepth = 1.5f;
-            if (_sceneLoaded && currentRoom != null)
+            var screenPoint = ImageToScreenCoordinates(coordinates);
+            
+            const float spawnDepth = 1.5f;
+            if (_sceneLoaded && _currentRoom)
             {
-                Ray ray = _camera.ScreenPointToRay(new Vector2(newX, newY));
-                if (currentRoom.Raycast(ray, 500, out RaycastHit hit, out MRUKAnchor anchor))
+                var ray = _camera.ScreenPointToRay(screenPoint, Camera.MonoOrStereoscopicEye.Mono);
+                if (_currentRoom.Raycast(ray, 500, out var hit, out var anchor))
                 {
-                    return hit.point;
+                    Debug.Log("Hit in image to world coordinates");
+                    return (hit.point, Quaternion.LookRotation(hit.normal));
                 }
             }
 
-            return _camera.ScreenToWorldPoint(new Vector3(newX, newY, spawnDepth));
+            return (_camera.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint.y, spawnDepth)), Quaternion.identity);
         }
 
         private Vector2 ImageToScreenCoordinates(Vector2 coordinates)
         {
             FeedDimensions feedDimensions = _videoFeedManager.GetFeedDimensions();
 
-            float cameraWidthScale = _camera.pixelWidth / feedDimensions.Width;
-            float cameraHeightScale = _camera.pixelHeight / feedDimensions.Height;
+            var xOffset = (_camera.scaledPixelWidth - feedDimensions.Width) / 2f;
+            var yOffset = (_camera.scaledPixelHeight - feedDimensions.Height) / 2f;
 
-            float newX = coordinates.x * cameraWidthScale;
-            float newY = _camera.pixelHeight - coordinates.y * cameraHeightScale;
+            var newX = coordinates.x + xOffset;
+            var newY = (feedDimensions.Height - coordinates.y) + yOffset;
 
-            return new Vector2(newX, newY);
+            // 200 pixel offset when using the Camera.MonoOrStereoscopicEye.Mono flag.
+            return new Vector2(newX, newY-200f);
+            
         }
 
         private void OnSceneLoad()
         {
             _sceneLoaded = true;
-            currentRoom = SceneManager.GetCurrentRoom();
+            _currentRoom = SceneManager.GetCurrentRoom();
         }
 
         private void OnSceneUpdated(MRUKRoom room)
         {
-            currentRoom = room;
+            _currentRoom = room;
         }
 
         #endregion

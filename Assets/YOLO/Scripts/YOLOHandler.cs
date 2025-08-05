@@ -57,8 +57,7 @@ namespace YOLOQuestUnity.YOLO
         [ConditionalField(nameof(_customizeModel))][SerializeField] private BackendType _backendType = BackendType.GPUCompute;
 
 
-        [Tooltip("Add Non-Max Suppression to the output of th" +
-            "e model.")]
+        [Tooltip("Add Non-Max Suppression to the output of the model.")]
         [ConditionalField(nameof(_customizeModel))][SerializeField] private bool _addNMS = false;
         [Tooltip("The IOU threshold for Non-Max Suppression.")]
         [ConditionalField(nameof(_customizeModel), nameof(_addNMS))][SerializeField][Range(0, 1)] private float _iouThreshold = 0.5f;
@@ -74,8 +73,8 @@ namespace YOLOQuestUnity.YOLO
 
         private InferenceHandler<Texture2D> _inferenceHandler;
 
-        private bool inferencePending = false;
-        private bool readingBack = false;
+        private bool inferencePending;
+        private bool readingBack;
         private Tensor<float> analysisResultTensor;
         private Texture2D _inputTexture;
         private IEnumerator splitInferenceEnumerator;
@@ -112,7 +111,7 @@ namespace YOLOQuestUnity.YOLO
         {
             if (_inferenceHandler is null) return;
 
-            if (YOLOCamera is null) return;
+            if (!YOLOCamera) return;
 
             if (readingBack) return;
 
@@ -134,10 +133,10 @@ namespace YOLOQuestUnity.YOLO
                     int it = 0;
                     Profiler.BeginSample("YOLOHandler.SplitInference");
                     while (splitInferenceEnumerator.MoveNext()) if (++it % _layersPerFrame == 0)
-                        {
-                            Profiler.EndSample();
-                            return;
-                        }
+                    {
+                        Profiler.EndSample();
+                        return;
+                    }
 
                     readingBack = true;
                     analysisResultTensor = _inferenceHandler.PeekOutput() as Tensor<float>;
@@ -172,7 +171,7 @@ namespace YOLOQuestUnity.YOLO
             catch (Exception e)
             {
                 Debug.LogException(e);
-                analysisResultTensor.Dispose();
+                analysisResultTensor?.Dispose();
                 analysisResultTensor = null;
                 _inferenceHandler.DisposeTensors();
                 inferencePending = false;
