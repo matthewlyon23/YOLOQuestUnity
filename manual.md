@@ -1,6 +1,10 @@
 # Manual
 
+Supports the Quest 3 and Quest 3S. To use the application, start it from the Quest application menu. Detection and model spawning will begin immediately.
+
 ## Configuration Options
+
+The full configuration can be defined in the Unity inspector using the configuration options listed below. Select configuration options are available using a menu placed on the back of the controllers.
 
 ### YOLOHandler
 
@@ -262,7 +266,5 @@ names:
   78: hair drier
   79: toothbrush
 ```
-
-
 
 Further details on training with Ultralytics YOLO can be found [here](https://docs.ultralytics.com/modes/train/) and dataset format can be found [here](https://docs.ultralytics.com/datasets/detect/)

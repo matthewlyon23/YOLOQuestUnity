@@ -64,6 +64,7 @@ ObjectDisplayManager:
 - The scene must use the [OVR Camera Rig](https://developers.meta.com/horizon/documentation/unity/unity-ovrcamerarig/) from the Oculus plugin as the main camera.
 - The XR Plugin must be set to Oculus, and Oculus XR must be the only installed XR Plugin.
 - An EnvironmentRaycastManager from the [Meta MR Utility Kit](https://developer.oculus.com/documentation/unity/unity-meta-mr-utility-kit/) must be added to the object containing the ObjectDisplayManager
+- An MRUK prefab object must be present in the scene.
 
 YOLOHandler:
 - The object containing the YOLO Handler must also contain one Camera component (not any of the AR cameras).
