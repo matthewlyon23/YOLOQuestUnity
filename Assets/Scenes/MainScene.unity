@@ -2352,6 +2352,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   textMeshProUGUI: {fileID: 1576591421}
   remoteYoloHandler: {fileID: 1524867589}
+  yoloHandler: {fileID: 0}
 --- !u!114 &924875306
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5493,7 +5494,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1035790433963668018, guid: 6a26396f4325372469ca0915e955d5a7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.000015735626
       objectReference: {fileID: 0}
     - target: {fileID: 1035790433963668018, guid: 6a26396f4325372469ca0915e955d5a7, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -6868,6 +6869,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   textMeshProUGUI: {fileID: 2039850932}
   remoteYoloHandler: {fileID: 1524867589}
+  yoloHandler: {fileID: 0}
 --- !u!114 &2123310936
 MonoBehaviour:
   m_ObjectHideFlags: 0
