@@ -111,7 +111,6 @@ namespace YOLOQuestUnity.YOLO
             {
                 await m_remoteYOLOClient.UploadCustomModelAsync(m_customModel.bytes);
                 m_useCustomModel = true;
-                Debug.Log("Using custom model");
             }
             catch (Exception e)
             {
@@ -128,7 +127,6 @@ namespace YOLOQuestUnity.YOLO
 
         private async Awaitable AnalyseImage(Texture2D texture)
         {
-            Debug.Log("Using model: " + m_YOLOModel);
             var imageConversionThreadParams = new ImageConversionThreadParams
             {
                 imageBuffer = texture.GetRawTextureData(),
