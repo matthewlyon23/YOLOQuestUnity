@@ -25,10 +25,10 @@ namespace YOLOQuestUnity.YOLO
         [SerializeField] private int InputSize = 640;
         
         [Tooltip("The number of model layers to run per frame. Increasing this value will decrease performance.")]
-        [MinValue(1)][SerializeField] private uint _layersPerFrame = 10;
+        [MinValue(1)][SerializeField] public uint _layersPerFrame = 10;
         
         [Tooltip("The threshold at which a detection is accepted.")]
-        [MinValue(0), MaxValue(1)] [SerializeField] private float _confidenceThreshold = 0.5f;
+        [MinValue(0), MaxValue(1)] [SerializeField] public float _confidenceThreshold = 0.5f;
         
         [Tooltip("A JSON containing a mapping of class numbers to class names")]
         [MustBeAssigned] [SerializeField] private TextAsset _classJson;

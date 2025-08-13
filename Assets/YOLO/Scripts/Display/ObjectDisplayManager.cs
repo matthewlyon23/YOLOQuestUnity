@@ -135,6 +135,21 @@ namespace YOLOQuestUnity.Display
 
         #region Model Methods
 
+        public void ClearModels()
+        {
+            foreach (var obj in _activeModels)
+            {
+                foreach (var model in obj.Value)
+                {
+                    Destroy(model.Value);
+                }
+                obj.Value.Clear();
+            }
+            _activeModels.Clear();
+            _modelCount = 0;
+        }
+        
+        
         private void RescaleObject(DetectedObject obj, GameObject model)
         {
 

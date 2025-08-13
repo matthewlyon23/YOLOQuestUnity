@@ -17,15 +17,16 @@ namespace YOLOQuestUnity.YOLO
     {
 
         [Tooltip("The network address (including port number if not using standard HTTP port 80) of the device running the remoteyolo processing server.")]
-        [MustBeAssigned] [SerializeField] private string m_remoteYOLOProcessorAddress;
+        [MustBeAssigned] [SerializeField]
+        public string m_remoteYOLOProcessorAddress;
         [SerializeField] private YOLOFormat m_YOLOFormat;
-        [ConditionalField(nameof(m_useCustomModel), true)] [SerializeField] private YOLOModel m_YOLOModel;
+        [ConditionalField(nameof(m_useCustomModel), true)] [SerializeField] public YOLOModel m_YOLOModel;
         [Tooltip("A custom YOLO model in .pt format. This field takes a file with a .bytes extension. Importing a .pt file into the project will automatically convert it to the correct format.")]
         [ConditionalField(nameof(m_useCustomModel))] [SerializeField] private TextAsset m_customModel;
-        [SerializeField] private bool m_useCustomModel;
+        [SerializeField] public bool m_useCustomModel;
         [Space(30f)]
         [Tooltip("The threshold below which a detection will be ignored.")]
-        [SerializeField] [Range(0f,1f)] private float m_confidenceThreshold = 0.5f;
+        [SerializeField] [Range(0f,1f)] public float m_confidenceThreshold = 0.5f;
         [Space(30f)]
         [MustBeAssigned]
         [Tooltip("The ObjectDisplayManager that will handle the spawning of digital double models.")]
@@ -42,7 +43,7 @@ namespace YOLOQuestUnity.YOLO
         private RemoteYOLOAnalyseResponse m_remoteYOLOResponse;
         private Camera m_analysisCamera;
 
-        private RemoteYOLOClient m_remoteYOLOClient;
+        public RemoteYOLOClient m_remoteYOLOClient;
         
         private byte[] m_imageData;
         
@@ -99,6 +100,20 @@ namespace YOLOQuestUnity.YOLO
                 Debug.LogError(e);
                 m_inferencePending = false;
                 m_inferenceDone = false;
+            }
+        }
+
+        public async Awaitable UploadCustomModelAsync()
+        {
+            try
+            {
+                await m_remoteYOLOClient.UploadCustomModelAsync(m_customModel.bytes);
+                m_useCustomModel = true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("Couldn't upload custom model: " + e.Message);
+                m_useCustomModel = false;
             }
         }
 
