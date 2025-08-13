@@ -74,6 +74,10 @@ RemoteYOLOHandler:
 PassthroughManager:
 - The `allow unsafe code` option must be selected in the player settings.
 
+### Known Issues
+
+- When opening the application for the first time, the permission prompts can cause the app to flicker between the Quest OS and the application, eventually resulting in a crash. To fix this, close the app and restart it.
+
 ## Contributing
 
 Please follow these steps:
