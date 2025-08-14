@@ -21,6 +21,7 @@ The project features several components which provide functionality for a number
 - A Remote YOLO handler which manages communication with a [remoteyolo](https://github.com/matthewlyon23/remoteyolo) server, including the uploading of custom models.
     - When a .pt file is imported it is converted to the correct format to be place in the Custom Model insepctor field.
     - Only compatible with the [remoteyolo](https://github.com/matthewlyon23/remoteyolo) project.
+- YOLO and RemoteYOLO configuration prefabs, providing hand menus which can be used to configure YOLO options on the fly.
 
 ### Requirements
 
@@ -74,7 +75,7 @@ RemoteYOLOHandler:
 PassthroughManager:
 - The `allow unsafe code` option must be selected in the player settings.
 
-### Known Issues
+## Known Issues
 
 - When opening the application for the first time, the permission prompts can cause the app to flicker between the Quest OS and the application, eventually resulting in a crash. To fix this, close the app and restart it.
 
