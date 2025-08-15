@@ -1,0 +1,25 @@
+{
+    "name": "YOLOQuestUnity.Display",
+    "rootNamespace": "",
+    "references": [
+        "AYellowpaper.SerializedCollections",
+        "meta.xr.mrutilitykit",
+        "YOLOQuestUnity.Utilities",
+        "YOLOQuestUnity.ObjectDetection",
+        "Unity.XR.Oculus",
+        "YOLOQuestUnity.PassthroughCamera",
+        "MyBox",
+        "DepthKit"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
