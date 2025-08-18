@@ -65,8 +65,6 @@ namespace YOLOQuestUnity.Display
 
         private bool _sceneLoaded = false;
         
-        [SerializeField] private MeshCollider meshCollider;
-
         #endregion
 
         private void Start()
@@ -75,7 +73,6 @@ namespace YOLOQuestUnity.Display
             SceneManager = FindAnyObjectByType<MRUK>();
             SceneManager.SceneLoadedEvent.AddListener(OnSceneLoad);
             SceneManager.RoomUpdatedEvent.AddListener(OnSceneUpdated);
-            _environmentRaycastManager = GetComponent<EnvironmentRaycastManager>();
         }
 
         public void DisplayModels(List<DetectedObject> objects, Camera referenceCamera)
@@ -88,11 +85,12 @@ namespace YOLOQuestUnity.Display
 
             foreach (var obj in objects)
             {
+                Debug.Log("Trying for obj: " + obj.CocoName);
                 if (objectCounts.GetValueOrDefault(obj.CocoClass) == 3) continue;
 
                 if (!_cocoModels.ContainsKey(obj.CocoName) || _cocoModels[obj.CocoName] == null)
                 {
-                    Debug.Log("Error: No model provided for the detected class.");
+                    Debug.LogWarning("No model provided for the detected class.");
 
                     continue;
                 }
@@ -104,8 +102,12 @@ namespace YOLOQuestUnity.Display
                     modelList = new Dictionary<int, GameObject>();
                     _activeModels.Add(obj.CocoClass, modelList);
                 }
+                
+                Debug.Log("Getting object world coordinates");
 
                 (Vector3 spawnPosition, Quaternion spawnRotation, float hitConfidence) = GetObjectWorldCoordinates(obj);
+                
+                Debug.Log("Got object world coordinates");
                 
                 if (IsDuplicate(spawnPosition, modelList)) continue;
 
@@ -219,13 +221,15 @@ namespace YOLOQuestUnity.Display
             Quaternion rotation;
             float hitConfidence = 1;
             
-            if (_environmentRaycastManager && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
-            {
+            // if (_environmentRaycastManager && _environmentRaycastManager.isActiveAndEnabled && EnvironmentRaycastManager.IsSupported)
+            // {
                 var screenPoint = ImageToScreenCoordinates(obj.BoundingBox.center);
                 // If you use Camera.MonoOrStereoscopicEye.Left then objects display off centre, even though the view is from the left eye, and the whole point of that flag is to account for that. Oh, also it's offset in the Y by about 200 pixels for some reason when you use Mono.
-                if (meshCollider.Raycast(
+                Debug.Log("Raycasting mesh");
+                if (_environmentRaycastManager.Raycast(
                             _camera.ScreenPointToRay(screenPoint, Camera.MonoOrStereoscopicEye.Mono), out var hit, float.MaxValue)) 
                 {
+                    // Debug.Log("Hit Mesh: " + hit.transform);
                     position = hit.point;
                     rotation = Quaternion.LookRotation(hit.normal);
                 }
@@ -233,8 +237,8 @@ namespace YOLOQuestUnity.Display
                 {
                     (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
                 }
-            }
-            else (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
+            // }
+            // else (position, rotation) = ImageToWorldCoordinates(obj.BoundingBox.center);
 
             return (position, rotation, hitConfidence);
         }
@@ -361,14 +365,18 @@ namespace YOLOQuestUnity.Display
 
         private Vector2 ImageToScreenCoordinates(Vector2 coordinates)
         {
+            Debug.Log("ITS: FeedDimensions");
             FeedDimensions feedDimensions = _videoFeedManager.GetFeedDimensions();
 
+            Debug.Log("ITS: xy Offset");
             var xOffset = (_camera.scaledPixelWidth - feedDimensions.Width) / 2f;
             var yOffset = (_camera.scaledPixelHeight - feedDimensions.Height) / 2f;
 
+            Debug.Log("ITS: newXY");
             var newX = coordinates.x + xOffset;
             var newY = (feedDimensions.Height - coordinates.y) + yOffset;
 
+            Debug.Log("ITS: New Vector");
             // 200 pixel offset when using the Camera.MonoOrStereoscopicEye.Mono flag.
             return new Vector2(newX, newY-200f);
             

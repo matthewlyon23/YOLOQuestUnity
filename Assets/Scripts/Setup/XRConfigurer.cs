@@ -1,5 +1,9 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.XR;
+using UnityEngine.XR.OpenXR;
+using UnityEngine.XR.OpenXR.Features;
+using UnityEngine.XR.OpenXR.Features.Extensions.PerformanceSettings;
 
 namespace Anaglyph.XRTemplate
 {
@@ -7,32 +11,20 @@ namespace Anaglyph.XRTemplate
 	public class XRConfigurer : MonoBehaviour
 	{
 		//[SerializeField] private float renderScale = 1.0f;
-		[SerializeField] private OVRManager.FoveatedRenderingLevel foveatedRenderingLevel = OVRManager.FoveatedRenderingLevel.Low;
-		[SerializeField] private bool useDynamicFoveatedRendering = true;
 		[SerializeField] private float framerateTarget = 72f;
 
-		[SerializeField] private OVRManager.ProcessorPerformanceLevel suggestedCpuPerfLevel = OVRManager.ProcessorPerformanceLevel.SustainedHigh;
-		[SerializeField] private OVRManager.ProcessorPerformanceLevel suggestedGpuPerfLevel = OVRManager.ProcessorPerformanceLevel.SustainedHigh;
+		[SerializeField] private PerformanceLevelHint suggestedCpuPerfLevel = PerformanceLevelHint.SustainedHigh;
+		[SerializeField] private PerformanceLevelHint suggestedGpuPerfLevel = PerformanceLevelHint.SustainedHigh;
 
 		//[Header("Should only be 0, 2, 4, or 8!")]
 		//[SerializeField] private ushort antialiasingMsaa = 4;
 
 		void Start()
 		{
-			StartCoroutine(WaitForOVRManagerInit());
-		}
-
-		private IEnumerator WaitForOVRManagerInit()
-		{
-			while (OVRManager.instance == null)
-				yield return null;
-
-			OVRManager.useDynamicFoveatedRendering = useDynamicFoveatedRendering;
-			OVRManager.foveatedRenderingLevel = foveatedRenderingLevel;
-			OVRManager.suggestedCpuPerfLevel = suggestedCpuPerfLevel;
-			OVRManager.suggestedGpuPerfLevel = suggestedGpuPerfLevel;
-
-			OVRPlugin.systemDisplayFrequency = framerateTarget;
+			XrPerformanceSettingsFeature.SetPerformanceLevelHint(PerformanceDomain.Cpu,
+				suggestedCpuPerfLevel);
+			XrPerformanceSettingsFeature.SetPerformanceLevelHint(PerformanceDomain.Gpu,
+				suggestedGpuPerfLevel);
 		}
 	}
 }

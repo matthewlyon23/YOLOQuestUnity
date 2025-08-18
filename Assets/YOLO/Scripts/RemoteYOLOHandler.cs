@@ -55,8 +55,6 @@ namespace YOLOQuestUnity.YOLO
             }
             
             m_analysisCamera = GetComponent<Camera>();
-            File.Delete(Path.Join(Application.persistentDataPath, "metrics.txt"));
-            File.Create(Path.Join (Application.persistentDataPath, "metrics.txt")).Close();
 
             m_remoteYOLOClient = new RemoteYOLOClient(m_remoteYOLOProcessorAddress);
             
@@ -76,6 +74,7 @@ namespace YOLOQuestUnity.YOLO
 
         private void Update()
         {
+            Debug.Log("Running RemoteYOLOHandler.Update");
             if (m_inferencePending) return;
             
             try
@@ -83,7 +82,9 @@ namespace YOLOQuestUnity.YOLO
                 if (!m_inferenceDone)
                 {
                     if (!YOLOCamera) return;
+                    Debug.Log("Getting texture");
                     if (!(m_inputTexture = YOLOCamera.GetTexture())) return;
+                    Debug.Log("got texture");
                     _ = AnalyseImage(m_inputTexture);
                     m_inferencePending = true;
                     m_analysisCamera.CopyFrom(m_referenceCamera);

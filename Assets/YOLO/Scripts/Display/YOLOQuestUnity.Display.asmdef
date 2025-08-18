@@ -6,10 +6,10 @@
         "meta.xr.mrutilitykit",
         "YOLOQuestUnity.Utilities",
         "YOLOQuestUnity.ObjectDetection",
-        "Unity.XR.Oculus",
         "YOLOQuestUnity.PassthroughCamera",
         "MyBox",
-        "DepthKit"
+        "Niantic.Lightship.AR",
+        "Unity.XR.ARFoundation"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
