@@ -146,11 +146,34 @@ The project provides prefabs for the instantiation of both the [RemoteYOLOHandle
 
 Simply drag these into the scene to use them.
 
+#### Remote YOLO Handler
+
+The RemoteYOLOHandler prefab permits the use of any remoteyolo processing server which is connected to the same network as the headset, either locally or via the internet.
+
+The address field value is combined with the appropriate endpoint for the given functions provided by the RemoteYOLOClient.
+
+#### YOLO Handler
+
+The YOLOHandler prefab uses the Unity Sentis library to perform YOLO analysis on-board the headset, without any external processing or the need for any network connection.
+
+With this prefab, the model file must be provided in ONNX format.
+
+**Important: The expected output of the model is the YOLOv10 format, with 1 batch channel, with n columns, each column having 6 rows - centre x, centre y, width, height, class index and confidence, in that order. If your model does not conform to this output, either modify the model externally or use the provided model modification options.**
+
+|Modification Option|Description|
+| --- | --- |
+|Add Classification Head|Adds a classification head to the model which selects the most likely class for each detection given the input format 1x84xN where each column is [cx, cy, w, h, c0, c1, ..., cn] where the confidence that the object detected is of class n is cn. This modification conforms the model to the expected output as described above.|
+|Quantization Type|Quantizes the final model to Float16 or Uint8. Uint8 provides the best performance while Float16 should provide better performance than Float32.|
+|Backend Type|Sets the backend on which the local analysis will be performed. Performance varies depending on hardware and utilization.|
+|Add NMS|Adds non-max suppression to the output of the model. Is only possible if Add Classification Head is selected.|
+
 ### Custom Models
 
 The [RemoteYOLOHandler](Assets/YOLO/Scripts/RemoteYOLOHandler.cs) and the [remoteyolo](https://github.com/matthewlyon23/remoteyolo) project support `.pt` YOLO model files created directly from the [ultralytics](https://github.com/ultralytics/ultralytics) Python module, based on any base YOLO model supported by Ultralytics.
 
 Simply import a `.pt` extension model into the project to automatically convert it into a format which can be attached to the Custom Model field of the RemoteYOLOHandler.
+
+The [YOLOHandler](Assets/YOLO/Scripts/YOLOHandler.cs) supports `.onnx` YOLO model files. These can be exported from  `.pt` files or other format using the ultralytics Python module.
 
 #### Training Custom Models
 

@@ -90,6 +90,19 @@ Please follow these steps:
 5. Push to the branch (`git push origin feature-branch`).
 6. Open a pull request.
 
+### Future Work
+
+Potential future work on this tool could include:
+
+- Improving the scaling system
+    - Currently, scaling is based on relative estimated model size. This can sometimes be innacurate.
+- Onboard Detection
+    - Whilst the tool supports and allows onboard detection, this is currently highly performance constrained. Optimisations to this system would remove the need for an external YOLO processing server such as the Raspberry Pi.
+- Latency
+    - Current processing latency produces minor inconsistencies between detection and spawn position due to headset movement. The inclusion of real-time meshing combined with the currently implemented camera caching technique could solve this issue.
+- Object Avoidance
+    - As well as augmenting objects, this technology also supports the potential for avoiding augmenting objects. Detecting that position of real-world objects could allow application developers to avoid placing augmentation over certain categories of objects.
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

@@ -58,11 +58,11 @@ namespace YOLOQuestUnity.YOLO
 
 
         [Tooltip("Add Non-Max Suppression to the output of the model.")]
-        [ConditionalField(nameof(_customizeModel))][SerializeField] private bool _addNMS = false;
+        [ConditionalField(nameof(_customizeModel), nameof(_addClassificationHead))][SerializeField] private bool _addNMS = false;
         [Tooltip("The IOU threshold for Non-Max Suppression.")]
-        [ConditionalField(nameof(_customizeModel), nameof(_addNMS))][SerializeField][Range(0, 1)] private float _iouThreshold = 0.5f;
+        [ConditionalField(nameof(_customizeModel), nameof(_addNMS), nameof(_addClassificationHead))][SerializeField][Range(0, 1)] private float _iouThreshold = 0.5f;
         [Tooltip("The Score threshold for Non-Max Suppression.")]
-        [ConditionalField(nameof(_customizeModel), nameof(_addNMS))][SerializeField][Range(0, 1)] private float _scoreThreshold = 0.5f;
+        [ConditionalField(nameof(_customizeModel), nameof(_addNMS), nameof(_addClassificationHead))][SerializeField][Range(0, 1)] private float _scoreThreshold = 0.5f;
 
 
         public Camera ReferenceCamera { get => _referenceCamera; private set => _referenceCamera = value; }
