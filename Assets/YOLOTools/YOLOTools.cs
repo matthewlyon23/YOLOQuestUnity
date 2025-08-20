@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Unity.Android.Types;
 using Unity.Sentis;
 using UnityEngine;
 using YOLOTools.YOLO.ObjectDetection;

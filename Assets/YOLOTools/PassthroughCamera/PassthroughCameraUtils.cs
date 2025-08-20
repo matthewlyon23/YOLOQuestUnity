@@ -272,6 +272,9 @@ namespace YOLOTools.PassthroughCamera
 
         internal static bool IsPassthroughEnabled()
         {
+            Debug.Log("PCA: IsInsightPassthroughSupported: " + OVRManager.IsInsightPassthroughSupported());
+            Debug.Log("PCA: IsInsightPassthroughInitialized: " + OVRManager.IsInsightPassthroughInitialized());
+            Debug.Log("PCA: IsInsightPassthroughEnabled: " + OVRManager.instance.isInsightPassthroughEnabled);
             return OVRManager.IsInsightPassthroughSupported() &&
                 OVRManager.IsInsightPassthroughInitialized() &&
                 OVRManager.instance.isInsightPassthroughEnabled;

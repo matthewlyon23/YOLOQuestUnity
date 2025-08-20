@@ -4,11 +4,12 @@
     "references": [
         "AYellowpaper.SerializedCollections",
         "meta.xr.mrutilitykit",
-        "Unity.XR.Oculus",
         "MyBox",
         "YOLOTools.PassthroughCamera",
         "YOLOTools.Utilities",
-        "YOLOTools.YOLO.ObjectDetection"
+        "YOLOTools.YOLO.ObjectDetection",
+        "Niantic.Lightship.AR",
+        "Niantic.Lightship.MetaQuest"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

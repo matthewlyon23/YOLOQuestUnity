@@ -88,6 +88,7 @@ namespace YOLOTools.PassthroughCamera
             var ptLayer = FindAnyObjectByType<OVRPassthroughLayer>();
             if (ptLayer == null || !PassthroughCameraUtils.IsPassthroughEnabled())
             {
+                Debug.Log("PCA: Could not find any passthrough layer");
                 yield break;
             }
 
