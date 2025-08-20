@@ -85,7 +85,6 @@ GameObject:
   m_Component:
   - component: {fileID: 7001997407906429419}
   - component: {fileID: 4397864841155442759}
-  - component: {fileID: 3039422756802342635}
   m_Layer: 5
   m_Name: Toggle
   m_TagString: Untagged
@@ -161,8 +160,9 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 3039422756802342635}
-        m_TargetAssemblyTypeName: HandMenuController, Assembly-CSharp
+      - m_Target: {fileID: 7576074981188271502}
+        m_TargetAssemblyTypeName: YOLOTools.YOLO.RemoteYOLO.UI.Controllers.HandMenuController,
+          YOLOTools.YOLO.RemoteYOLO.UI.Controllers
         m_MethodName: OnCustomModelToggleChanged
         m_Mode: 2
         m_Arguments:
@@ -174,19 +174,6 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   m_IsOn: 1
---- !u!114 &3039422756802342635
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1445130543430646823}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3f51adfe6d71cf041bb6764000b79100, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  remoteYoloHandler: {fileID: 0}
 --- !u!1 &1561013904494216840
 GameObject:
   m_ObjectHideFlags: 0
@@ -199,7 +186,7 @@ GameObject:
   - component: {fileID: 1724055946159681868}
   - component: {fileID: 1258446389445440969}
   - component: {fileID: 2651272067540190497}
-  - component: {fileID: 6540397162693436669}
+  - component: {fileID: 67735733910114462}
   m_Layer: 5
   m_Name: Dropdown
   m_TagString: Untagged
@@ -333,8 +320,9 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 6540397162693436669}
-        m_TargetAssemblyTypeName: YOLOModelDropdownController, Assembly-CSharp
+      - m_Target: {fileID: 67735733910114462}
+        m_TargetAssemblyTypeName: YOLOTools.YOLO.RemoteYOLO.UI.Controllers.YOLOModelDropdownController,
+          YOLOTools.YOLO.RemoteYOLO.UI.Controllers
         m_MethodName: OnYOLOModelDropdownValueChanged
         m_Mode: 2
         m_Arguments:
@@ -346,7 +334,7 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   m_AlphaFadeSpeed: 0.15
---- !u!114 &6540397162693436669
+--- !u!114 &67735733910114462
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -355,7 +343,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1561013904494216840}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e13985e8857e3d144893e03233aa3e78, type: 3}
+  m_Script: {fileID: 11500000, guid: 09d2da9cdeb250c48aa795654cdf41c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   remoteYoloHandler: {fileID: 0}
@@ -2005,7 +1993,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5438914017466165784}
   - component: {fileID: 2498160887525210326}
-  - component: {fileID: 8677180857834690939}
+  - component: {fileID: 1165205352498734238}
   m_Layer: 5
   m_Name: Slider
   m_TagString: Untagged
@@ -2086,8 +2074,9 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 8677180857834690939}
-        m_TargetAssemblyTypeName: ConfidenceSliderController, Assembly-CSharp
+      - m_Target: {fileID: 1165205352498734238}
+        m_TargetAssemblyTypeName: YOLOTools.YOLO.RemoteYOLO.UI.Controllers.ConfidenceSliderController,
+          YOLOTools.YOLO.RemoteYOLO.UI.Controllers
         m_MethodName: OnConfidenceSliderValueChanged
         m_Mode: 2
         m_Arguments:
@@ -2098,7 +2087,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &8677180857834690939
+--- !u!114 &1165205352498734238
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2107,7 +2096,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6079874049467514739}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6f1f770a55ad7864fb2ddd5259b2c7ca, type: 3}
+  m_Script: {fileID: 11500000, guid: 16f244138b0288f4c8bc138516ecc6d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   textMeshProUGUI: {fileID: 1365581316138876409}
@@ -2996,7 +2985,7 @@ GameObject:
   - component: {fileID: 3471438155910452048}
   - component: {fileID: 472434575694797028}
   - component: {fileID: 1091961704708321989}
-  - component: {fileID: 8675714400845611544}
+  - component: {fileID: 4976050176268196697}
   m_Layer: 5
   m_Name: InputField (TMP)
   m_TagString: Untagged
@@ -3124,8 +3113,9 @@ MonoBehaviour:
   m_OnEndEdit:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 8675714400845611544}
-        m_TargetAssemblyTypeName: RemoteYOLOAddressInputFieldController, Assembly-CSharp
+      - m_Target: {fileID: 4976050176268196697}
+        m_TargetAssemblyTypeName: YOLOTools.YOLO.RemoteYOLO.UI.Controllers.RemoteYOLOAddressInputFieldController,
+          YOLOTools.YOLO.RemoteYOLO.UI.Controllers
         m_MethodName: OnEndEdit
         m_Mode: 2
         m_Arguments:
@@ -3175,7 +3165,7 @@ MonoBehaviour:
   isAlert: 0
   m_InputValidator: {fileID: 0}
   m_ShouldActivateOnSelect: 1
---- !u!114 &8675714400845611544
+--- !u!114 &4976050176268196697
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3184,7 +3174,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 7833539115657041710}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 26267dfdc2b05a14596e3e84f3ccee4b, type: 3}
+  m_Script: {fileID: 11500000, guid: e6d926bb9192d084b84ff91b17ba0211, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   remoteYoloHandler: {fileID: 0}
@@ -3837,7 +3827,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1035790433963668018, guid: 6a26396f4325372469ca0915e955d5a7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6935669295854381289}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5648130919276084443, guid: 6a26396f4325372469ca0915e955d5a7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7576074981188271502}
   m_SourcePrefab: {fileID: 100100000, guid: 6a26396f4325372469ca0915e955d5a7, type: 3}
 --- !u!224 &4228464578087367394 stripped
 RectTransform:
@@ -3849,3 +3842,21 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8072890477496077224, guid: 6a26396f4325372469ca0915e955d5a7, type: 3}
   m_PrefabInstance: {fileID: 3814931274114449616}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &8832520862160075787 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5648130919276084443, guid: 6a26396f4325372469ca0915e955d5a7, type: 3}
+  m_PrefabInstance: {fileID: 3814931274114449616}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7576074981188271502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8832520862160075787}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c3ee1d5d3e77fe4fbd752efeca28d0c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  remoteYoloHandler: {fileID: 0}
