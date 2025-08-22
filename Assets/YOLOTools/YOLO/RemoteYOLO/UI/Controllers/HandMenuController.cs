@@ -1,3 +1,4 @@
+using MyBox;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,7 +7,7 @@ namespace YOLOTools.YOLO.RemoteYOLO.UI.Controllers
     public class HandMenuController : MonoBehaviour
     {
 
-        [SerializeField] private RemoteYOLOHandler remoteYoloHandler;
+        [MustBeAssigned] [SerializeField] private RemoteYOLOHandler remoteYoloHandler;
 
         void Start()
         {

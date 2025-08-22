@@ -1,3 +1,4 @@
+using MyBox;
 using TMPro;
 using UnityEngine;
 
@@ -6,7 +7,7 @@ namespace YOLOTools.YOLO.RemoteYOLO.UI.Controllers
     public class RemoteYOLOAddressInputFieldController : MonoBehaviour
     {
 
-        [SerializeField] private RemoteYOLOHandler remoteYoloHandler;
+        [MustBeAssigned] [SerializeField] private RemoteYOLOHandler remoteYoloHandler;
 
         void Start()
         {

@@ -1,5 +1,5 @@
 {
-    "name": "YOLOTools.YOLO.ObjectDetection.Utilitites",
+    "name": "YOLOTools.YOLO.ObjectDetection.Utilities",
     "rootNamespace": "",
     "references": [
         "Unity.Sentis"

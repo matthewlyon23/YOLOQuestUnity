@@ -55,7 +55,16 @@ namespace YOLOTools.YOLO
                 Permission.RequestUserPermission("internet");
             }
             
-            m_analysisCamera = GetComponent<Camera>();
+            if (!TryGetComponent(out m_analysisCamera))
+            {
+                m_analysisCamera = gameObject.AddComponent<Camera>();
+                m_analysisCamera.enabled = true;
+                m_analysisCamera.clearFlags = CameraClearFlags.SolidColor;
+                m_analysisCamera.backgroundColor = Color.clear;
+                m_analysisCamera.stereoTargetEye = StereoTargetEyeMask.None;
+                m_analysisCamera.targetDisplay = 7;
+            }
+            
             File.Delete(Path.Join(Application.persistentDataPath, "metrics.txt"));
             File.Create(Path.Join (Application.persistentDataPath, "metrics.txt")).Close();
 

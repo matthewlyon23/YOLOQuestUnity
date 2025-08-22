@@ -104,11 +104,21 @@ namespace YOLOTools.YOLO
 
             _inferenceHandler = new YOLOInferenceHandler(yoloModel, ref InputSize);
             if (_layersPerFrame <= 0) _layersPerFrame = 1;
-            _analysisCamera = GetComponent<Camera>();
+            if (!TryGetComponent(out _analysisCamera))
+            {
+                _analysisCamera = gameObject.AddComponent<Camera>();
+                _analysisCamera.enabled = true;
+                _analysisCamera.clearFlags = CameraClearFlags.SolidColor;
+                _analysisCamera.backgroundColor = Color.clear;
+                _analysisCamera.stereoTargetEye = StereoTargetEyeMask.None;
+                _analysisCamera.targetDisplay = 7;
+            }
         }
 
         void Update()
         {
+            if (_classes is null) return;
+            
             if (_inferenceHandler is null) return;
 
             if (!YOLOCamera) return;
