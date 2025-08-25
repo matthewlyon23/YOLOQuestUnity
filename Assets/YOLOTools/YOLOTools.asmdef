@@ -1,0 +1,21 @@
+{
+    "name": "YOLOTools",
+    "rootNamespace": "",
+    "references": [
+        "GUID:d9cb208ea41f63241ba007502603b545",
+        "GUID:efeb67980f7f7454c923a739838fc773",
+        "GUID:d6e7440f6588abf4082434d2c2a8eaae",
+        "GUID:63865d0fb309a2a4e8f95a828b7d1a09",
+        "GUID:40514a89dff83c3489494f939a429718",
+        "GUID:63a57c8b658089e49a173b0f0c4870a7"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
