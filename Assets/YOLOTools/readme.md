@@ -19,11 +19,22 @@ functions and capabilities for a streamlined YOLO experience in Unity.
 
 ### Unity Package Manager
 
+#### Installing From Disk
+
 To install using the Unity Package Manager, click the `+` icon in the top left of the package manager and select `Install package from disk...`. Navigate to the YOLOTools folder and
 select the [`package.json`](package.json) file. This will automatically install all necessary dependencies from
 the Unity registry. All other necessary packages are included within YOLOTools.
 
 ![upm_disk.png](docs/upm_disk.png)
+
+#### Installing From Git
+
+Select the `+` icon in the top left of the Package Manager window and select `Install package from git URL...`.
+Enter the url of a git repository hosting the package ([feel free to use this one](https://github.com/matthewlyon23/YOLOTools)) and 
+click `Install`. If the package is in a subdirectory of the repository, this can be specified with the [`path` query
+parameter](https://docs.unity3d.com/6000.2/Documentation/Manual/upm-git.html#subfolder).
+
+
 
 ### Installing Manually
 
