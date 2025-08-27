@@ -28,7 +28,6 @@ namespace YOLOTools.YOLO
         [Tooltip("The threshold below which a detection will be ignored.")]
         [SerializeField] [Range(0f,1f)] public float m_confidenceThreshold = 0.5f;
         [Space(30f)]
-        [MustBeAssigned]
         [Tooltip("The ObjectDisplayManager that will handle the spawning of digital double models.")]
         [SerializeField] [DisplayInspector] private ObjectDisplayManager m_objectDisplayManager;
         [Tooltip("The VideoFeedManager to analyse frames from.")]

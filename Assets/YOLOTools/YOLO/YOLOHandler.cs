@@ -48,7 +48,6 @@ namespace YOLOTools.YOLO
         private Camera _referenceCamera;
 
         [Tooltip("The ObjectDisplayManager that will handle the spawning of digital double models.")]
-        [MustBeAssigned]
         [DisplayInspector]
         [SerializeField]
         private ObjectDisplayManager _displayManager;
