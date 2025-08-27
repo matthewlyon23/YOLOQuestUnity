@@ -7,7 +7,6 @@ using Meta.XR.MRUtilityKit;
 using MyBox;
 using UnityEngine;
 using UnityEngine.Profiling;
-using YOLOTools.ObjectDetection;
 using YOLOTools.Utilities;
 using YOLOTools.YOLO.ObjectDetection;
 
@@ -39,7 +38,7 @@ namespace YOLOTools.YOLO.Display
 
         [Tooltip("The scaling method to use:\nMIN: Use the minimum of the x and y scale change.\nMAX: Use the maximum of the x and y scale change.\nAVERAGE: Use the average of both the x and y scale change.\nWIDTH: Use the x scale change.\nHEIGHT: Use the y scale change.")]
         [SerializeField] private ScaleType _scaleType = ScaleType.AVERAGE;
-
+        
         private const float ScaleDampener = 0f;
         
         

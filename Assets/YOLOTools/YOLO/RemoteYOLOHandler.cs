@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using MyBox;
@@ -8,15 +7,15 @@ using UnityEngine.Android;
 using UnityEngine.Experimental.Rendering;
 using YOLOTools.Utilities;
 using YOLOTools.YOLO.Display;
-using YOLOTools.ObjectDetection;
-using YOLOTools.YOLO.ObjectDetection;
 using YOLOTools.YOLO.RemoteYOLO;
 
 namespace YOLOTools.YOLO
 {
-    public class RemoteYOLOHandler : MonoBehaviour
+    public class RemoteYOLOHandler : YOLOProvider
     {
 
+        #region Inputs
+        
         [Tooltip("The network address (including port number if not using standard HTTP port 80) of the device running the remoteyolo processing server.")]
         [MustBeAssigned] [SerializeField]
         public string m_remoteYOLOProcessorAddress;
@@ -38,15 +37,21 @@ namespace YOLOTools.YOLO
         [Tooltip("The base camera for scene analysis")]
         [SerializeField] private Camera m_referenceCamera;
 
+        #endregion
+        
+        #region Internal Variables
+        
         private Texture2D m_inputTexture;
         private bool m_inferencePending = false;
         private bool m_inferenceDone = false;
         private RemoteYOLOAnalyseResponse m_remoteYOLOResponse;
         private Camera m_analysisCamera;
 
-        public RemoteYOLOClient m_remoteYOLOClient;
-        
         private byte[] m_imageData;
+        
+        #endregion
+        
+        public RemoteYOLOClient m_remoteYOLOClient;
         
         private void Start()
         {
@@ -102,10 +107,9 @@ namespace YOLOTools.YOLO
                 {
                     m_inferencePending = false;
                     m_inferenceDone = false;
-                    m_objectDisplayManager.DisplayModels(
-                        YOLOPostProcessor.RemoteYOLOPostprocess(m_remoteYOLOResponse, m_confidenceThreshold),
-                        m_analysisCamera
-                        );
+                    var detectedObjects = YOLOPostProcessor.RemoteYOLOPostprocess(m_remoteYOLOResponse, m_confidenceThreshold);
+                    OnDetectedObjectsUpdated(detectedObjects);
+                    if (m_objectDisplayManager) m_objectDisplayManager.DisplayModels(detectedObjects, m_analysisCamera);
                 }
             }
             catch (Exception e)

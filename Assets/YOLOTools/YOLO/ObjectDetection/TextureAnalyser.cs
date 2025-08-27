@@ -1,8 +1,12 @@
 using System.Collections;
-using Unity.Sentis;
 using UnityEngine;
+#if UNITY_6000_2_OR_NEWER
+using Unity.InferenceEngine;
+#else
+using Unity.Sentis;
+#endif
 
-namespace YOLOTools.ObjectDetection
+namespace YOLOTools.YOLO.ObjectDetection
 {
     public class TextureAnalyser
     {

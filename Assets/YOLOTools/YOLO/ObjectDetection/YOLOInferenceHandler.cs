@@ -1,8 +1,11 @@
 using System.Collections;
+#if UNITY_6000_2_OR_NEWER
+using Unity.InferenceEngine;
+#else
 using Unity.Sentis;
+#endif
 using UnityEngine;
 using YOLOTools.Inference;
-using YOLOTools.ObjectDetection;
 using YOLOTools.YOLO.ObjectDetection.Utilities;
 
 namespace YOLOTools.YOLO.ObjectDetection

@@ -3,7 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+#if UNITY_6000_2_OR_NEWER
+using Unity.InferenceEngine;
+#else
 using Unity.Sentis;
+#endif
 using UnityEngine;
 using YOLOTools.YOLO.ObjectDetection;
 using YOLOTools.YOLO.ObjectDetection.Utilities;
