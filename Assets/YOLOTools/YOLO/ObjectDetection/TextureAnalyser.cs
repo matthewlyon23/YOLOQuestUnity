@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 #if UNITY_6000_2_OR_NEWER
@@ -8,7 +9,7 @@ using Unity.Sentis;
 
 namespace YOLOTools.YOLO.ObjectDetection
 {
-    public class TextureAnalyser
+    public class TextureAnalyser : IDisposable
     {
         private readonly Worker _worker;
         private Tensor<float> _input;
@@ -40,14 +41,11 @@ namespace YOLOTools.YOLO.ObjectDetection
             return output;
         }
 
-        public void OnDestroy()
+
+        public void Dispose()
         {
-            _input.Dispose();
+            _worker?.Dispose();
+            _input?.Dispose();
         }
-
-
-
-
-
     }
 }

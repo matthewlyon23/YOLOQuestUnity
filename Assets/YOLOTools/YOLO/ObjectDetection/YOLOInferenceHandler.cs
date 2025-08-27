@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 #if UNITY_6000_2_OR_NEWER
 using Unity.InferenceEngine;
@@ -10,7 +11,7 @@ using YOLOTools.YOLO.ObjectDetection.Utilities;
 
 namespace YOLOTools.YOLO.ObjectDetection
 {
-    public class YOLOInferenceHandler : InferenceHandler<Texture2D>
+    public class YOLOInferenceHandler : InferenceHandler<Texture2D>, IDisposable
     {
         private readonly TextureAnalyser _textureAnalyser;
         private readonly int _size;
@@ -52,13 +53,7 @@ namespace YOLOTools.YOLO.ObjectDetection
 
         public override void DisposeTensors()
         {
-            _textureAnalyser.OnDestroy();
-        }
-
-        public override void OnDestroy()
-        {
-            _worker.Dispose();
-            _textureAnalyser.OnDestroy();
+            _textureAnalyser.Dispose();
         }
 
         public override Tensor PeekOutput()
@@ -66,5 +61,9 @@ namespace YOLOTools.YOLO.ObjectDetection
             return _worker.PeekOutput();
         }
 
+        public void Dispose()
+        {
+            _textureAnalyser?.Dispose();
+        }
     }
 }

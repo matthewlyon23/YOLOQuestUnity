@@ -20,7 +20,5 @@ namespace YOLOTools.Inference
         public abstract Tensor PeekOutput();
 
         public abstract void DisposeTensors();
-
-        public abstract void OnDestroy();
     }
 }

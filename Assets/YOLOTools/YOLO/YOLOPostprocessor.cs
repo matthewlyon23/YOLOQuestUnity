@@ -32,7 +32,9 @@ namespace YOLOTools.YOLO
                 float width = result[0, 2, i] * widthScale;
                 float height = result[0, 3, i] * heightScale;
 
-                objects.Add(new DetectedObject(centerX, centerY, width, height, cocoClass, classes[cocoClass],
+                var className = classes.GetValueOrDefault(cocoClass, null);
+                
+                objects.Add(new DetectedObject(centerX, centerY, width, height, cocoClass, className,
                     confidence));
             }
 

@@ -36,11 +36,13 @@ namespace YOLOTools
                 throw new ArgumentException("Could not customize provided YOLO model asset.");
             var size = yoloAnalysisParameters.Size;
             var inferenceHandler = new YOLOInferenceHandler(yoloModel, ref size, yoloAnalysisParameters.BackendType);
-
+            
             var result = await inferenceHandler.Run(texture);
 
-            return YOLOPostProcessor.PostProcess(result, texture, size, yoloAnalysisParameters.Classes,
-                yoloAnalysisParameters.ConfidenceThreshold);
+            var objects = YOLOPostProcessor.PostProcess(result, texture, size, yoloAnalysisParameters.Classes, yoloAnalysisParameters.ConfidenceThreshold);
+            result?.Dispose();
+            inferenceHandler.Dispose();
+            return objects;
         }
 
         /// <summary>
@@ -63,30 +65,10 @@ namespace YOLOTools
 
             var result = inferenceHandler.Run(texture).GetAwaiter().GetResult();
 
-            return YOLOPostProcessor.PostProcess(result, texture, size, yoloAnalysisParameters.Classes,
-                yoloAnalysisParameters.ConfidenceThreshold);
-        }
-
-        /// <summary>
-        /// Analyses the provided texture using the provided YOLO model. This method returns an IEnumerator which the caller must then use to schedule
-        /// the analysis on the GPU. <b>Running this method will not perform any analysis. The caller must call MoveNext() on the enumerator, which will schedule
-        /// one layer of the model, until
-        /// it is complete in order to perform analysis.</b> The results can then be extracted using the <see cref="YOLOInferenceHandler"/>.
-        /// </summary>
-        /// <param name="texture">The texture to analyse.</param>
-        /// <param name="modelAsset">The model to use for analysis.</param>
-        /// <param name="yoloAnalysisParameters">The YOLO analysis settings.</param>
-        /// <param name="customizationParameters">The model customization settings.</param>
-        /// <param name="yoloInferenceHandler">The inference handler which will run the analysis. This is used to access the results of the analysis.</param>
-        /// <exception cref="ArgumentException">Thrown if the provided <paramref name="modelAsset"/> could not be customized, likely due to an incorrect output format.</exception>
-        /// <returns>Returns an <see cref="IEnumerator"/> which controls the execution of each layer of the model.</returns>
-        public static IEnumerator YOLOAnalyseWithLayerControl(Texture2D texture, ModelAsset modelAsset, YOLOAnalysisParameters yoloAnalysisParameters, YOLOCustomizationParameters customizationParameters, out YOLOInferenceHandler yoloInferenceHandler)
-        {
-            if (!YOLOCustomizer.CustomizeModel(modelAsset, customizationParameters, out var yoloModel))
-                throw new ArgumentException("Could not customize provided YOLO model asset.");            var size = yoloAnalysisParameters.Size;
-            yoloInferenceHandler = new YOLOInferenceHandler(yoloModel, ref size, yoloAnalysisParameters.BackendType);
-            
-            return yoloInferenceHandler.RunWithLayerControl(texture);
+            var objects = YOLOPostProcessor.PostProcess(result, texture, size, yoloAnalysisParameters.Classes, yoloAnalysisParameters.ConfidenceThreshold);
+            result?.Dispose();
+            inferenceHandler.Dispose();
+            return objects;
         }
         
         /// <summary>
@@ -102,8 +84,8 @@ namespace YOLOTools
         /// <param name="layersPerFrame">The number of layers to execute per frame. Increasing this number will increase the GPU latency per frame.</param>
         /// <exception cref="ArgumentException">Thrown if the provided <paramref name="modelAsset"/> could not be customized, likely due to an incorrect output format.</exception>
         /// <returns>Returns a list of <see cref="DetectedObject"/>s which represent any detections in the given texture.</returns>
-        public static async Task<List<DetectedObject>> YOLOAnalyseWithLayerControlAsync(Texture2D texture, ModelAsset modelAsset,
-            YOLOAnalysisParameters yoloAnalysisParameters, YOLOCustomizationParameters customizationParameters, uint layersPerFrame = 10)
+        public static async Task<List<DetectedObject>> YOLOAnalyseAsync(Texture2D texture, ModelAsset modelAsset,
+            YOLOAnalysisParameters yoloAnalysisParameters, YOLOCustomizationParameters customizationParameters, uint layersPerFrame)
         {
             if (!YOLOCustomizer.CustomizeModel(modelAsset, customizationParameters, out var yoloModel))
                 throw new ArgumentException("Could not customize provided YOLO model asset.");            var size = yoloAnalysisParameters.Size;
@@ -121,8 +103,12 @@ namespace YOLOTools
 
             var result = await inferenceHandler.PeekOutput().ReadbackAndCloneAsync() as Tensor<float>;
             
-            return YOLOPostProcessor.PostProcess(result, texture, size, yoloAnalysisParameters.Classes,
+            var objects = YOLOPostProcessor.PostProcess(result, texture, size, yoloAnalysisParameters.Classes,
                 yoloAnalysisParameters.ConfidenceThreshold);
+            result?.Dispose();
+            inferenceHandler.Dispose();
+            return objects;
+
         }
 
         /// <summary>

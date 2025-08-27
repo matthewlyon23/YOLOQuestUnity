@@ -88,6 +88,8 @@ namespace YOLOTools.YOLO.Display
 
             foreach (var obj in objects)
             {
+                if (obj.CocoName == null) continue;
+                
                 if (objectCounts.GetValueOrDefault(obj.CocoClass) == 3) continue;
 
                 if (!_cocoModels.ContainsKey(obj.CocoName) || _cocoModels[obj.CocoName] == null)
