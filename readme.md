@@ -32,6 +32,7 @@ The project features several components which provide functionality for a number
 - Packages:
   - Listed in [Packages/manifest.json](Packages/manifest.json)
   - Necessary packages will be installed automatically by the Unity Editor
+- Horizon OS version 76
 
 ## Installation
 

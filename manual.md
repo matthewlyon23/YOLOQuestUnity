@@ -160,12 +160,12 @@ With this prefab, the model file must be provided in ONNX format.
 
 **Important: The expected output of the model is the YOLOv10 format, with 1 batch channel, with n columns, each column having 6 rows - centre x, centre y, width, height, class index and confidence, in that order. If your model does not conform to this output, either modify the model externally or use the provided model modification options.**
 
-|Modification Option|Description|
-| --- | --- |
-|Add Classification Head|Adds a classification head to the model which selects the most likely class for each detection given the input format 1x84xN where each column is [cx, cy, w, h, c0, c1, ..., cn] where the confidence that the object detected is of class n is cn. This modification conforms the model to the expected output as described above.|
-|Quantization Type|Quantizes the final model to Float16 or Uint8. Uint8 provides the best performance while Float16 should provide better performance than Float32.|
-|Backend Type|Sets the backend on which the local analysis will be performed. Performance varies depending on hardware and utilization.|
-|Add NMS|Adds non-max suppression to the output of the model. Is only possible if Add Classification Head is selected.|
+| Modification Option     | Description                                                                                                                                                                                                                                                                                                                          |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Add Classification Head | Adds a classification head to the model which selects the most likely class for each detection given the input format 1x84xN where each column is [cx, cy, w, h, c0, c1, ..., cn] where the confidence that the object detected is of class n is cn. This modification conforms the model to the expected output as described above. |
+| Quantization Type       | Quantizes the final model to Float16 or Uint8. Uint8 provides the best performance while Float16 should provide better performance than Float32.                                                                                                                                                                                     |
+| Backend Type            | Sets the backend on which the local analysis will be performed. Performance varies depending on hardware and utilization.                                                                                                                                                                                                            |
+| Add NMS                 | Adds non-max suppression to the output of the model. Is only possible if Add Classification Head is selected.                                                                                                                                                                                                                        |
 
 ### Custom Models
 
