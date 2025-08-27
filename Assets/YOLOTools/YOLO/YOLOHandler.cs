@@ -128,14 +128,14 @@ namespace YOLOTools.YOLO
             {
                 if (!YOLOCustomizer.CustomizeModel(_model,
                         new YOLOCustomizationParameters(_addClassificationHead, _quantizationType, _addNMS,
-                            _iouThreshold, _scoreThreshold, _backendType), out yoloModel))
+                            _iouThreshold, _scoreThreshold), out yoloModel))
                 {
                     throw new ArgumentException("YOLO Model could not be customized.");
                 }
             }
             else yoloModel = new YOLOModel(ModelLoader.Load(_model));
 
-            _inferenceHandler = new YOLOInferenceHandler(yoloModel, ref InputSize);
+            _inferenceHandler = new YOLOInferenceHandler(yoloModel, ref InputSize, backendType: _backendType);
             if (_layersPerFrame <= 0) _layersPerFrame = 1;
             if (!TryGetComponent(out _analysisCamera))
             {

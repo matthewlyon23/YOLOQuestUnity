@@ -118,15 +118,12 @@ namespace YOLOTools.YOLO.ObjectDetection.Utilities
 
         public float IoUThreshold;
         public float ScoreThreshold;
-
-        public BackendType BackendType;
-
-        public YOLOCustomizationParameters(bool addClassificationHead = true, YOLOQuantizationType yoloQuantizationType = YOLOQuantizationType.None, bool addNMS = false, float iouThreshold = 0.5f, float scoreThreshold = 0.5f, BackendType backendType = BackendType.GPUCompute)
+        
+        public YOLOCustomizationParameters(bool addClassificationHead = true, YOLOQuantizationType yoloQuantizationType = YOLOQuantizationType.None, bool addNMS = false, float iouThreshold = 0.5f, float scoreThreshold = 0.5f)
         {
             AddClassificationHead = addClassificationHead;
             IoUThreshold = iouThreshold;
             ScoreThreshold = scoreThreshold;
-            BackendType = backendType;
 
             switch (yoloQuantizationType)
             {
