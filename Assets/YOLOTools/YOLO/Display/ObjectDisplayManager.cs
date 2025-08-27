@@ -72,7 +72,10 @@ namespace YOLOTools.YOLO.Display
             SceneManager = FindAnyObjectByType<MRUK>();
             SceneManager.SceneLoadedEvent.AddListener(OnSceneLoad);
             SceneManager.RoomUpdatedEvent.AddListener(OnSceneUpdated);
-            _environmentRaycastManager = GetComponent<EnvironmentRaycastManager>();
+            if (!TryGetComponent(out _environmentRaycastManager))
+            {
+                _environmentRaycastManager = gameObject.AddComponent<EnvironmentRaycastManager>();
+            }
             Unity.XR.Oculus.Utils.SetupEnvironmentDepth(new Unity.XR.Oculus.Utils.EnvironmentDepthCreateParams());
         }
 

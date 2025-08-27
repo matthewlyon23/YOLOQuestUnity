@@ -32,6 +32,7 @@ namespace YOLOTools.PassthroughCamera
             Assert.AreEqual(1, FindObjectsByType<WebCamTextureManager>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length,
                 $"PCA: Passthrough Camera: more than one {nameof(WebCamTextureManager)} component. Only one instance is allowed at a time. Current instance: {name}");
 #if UNITY_ANDROID
+            if (!m_permissionsManager) m_permissionsManager = gameObject.AddComponent<PassthroughCameraPermissions>();
             m_permissionsManager.AskCameraPermissions();
 #endif
         }
