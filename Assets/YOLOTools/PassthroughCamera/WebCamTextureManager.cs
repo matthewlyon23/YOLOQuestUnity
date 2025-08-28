@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Experimental.Rendering;
 using YOLOTools.Utilities;
+using MyBox;
 
 namespace YOLOTools.PassthroughCamera
 {
@@ -22,7 +23,7 @@ namespace YOLOTools.PassthroughCamera
         /// Returns <see cref="WebCamTexture"/> reference if required permissions were granted and this component is enabled. Else, returns null.
         /// </summary>
         private WebCamTexture WebCamTexture;
-        [SerializeField] PassthroughCameraPermissions m_permissionsManager;
+        [MustBeAssigned] [SerializeField] PassthroughCameraPermissions m_permissionsManager;
 
 
         private bool m_hasPermission;
