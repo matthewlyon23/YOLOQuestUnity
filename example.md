@@ -41,6 +41,52 @@ easiest way is to use the Mixed Reality template available in the Unity Hub.
 
 ![example-1.png](docs/example-1.png)
 
+### Permissions
+
+To use the toolkit, the relevant permissions must be obtained on the device. The list of permissions required is as follows:
+
+- `com.oculus.permission.USE_ANCHOR_API`
+- `com.oculus.permission.USE_SCENE`
+- `horizonos.permission.HEADSET_CAMERA`
+- `android.permission.CAMERA`
+
+Note that other permissions may be required depending on your application.
+
+The easiest way to guarantee that these permissions are requested is by adding to the AndroidManifest file.
+This is located under the Assets/Plugins/Android folder and is named AndroidManifest.xml.
+
+An example Android Manifest which contains the necessary permissions:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+  <application android:label="@string/app_name" android:icon="@mipmap/app_icon" android:allowBackup="false">
+    <!--Used when Application Entry is set to Activity, otherwise remove this activity block-->
+    <activity android:name="com.unity3d.player.UnityPlayerGameActivity" android:theme="@style/UnityThemeSelector">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+        <category android:name="com.oculus.intent.category.VR" />
+      </intent-filter>
+      <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+      <meta-data android:name="com.oculus.vr.focusaware" android:value="true" />
+    </activity>
+    <meta-data android:name="com.oculus.handtracking.frequency" android:value="LOW" />
+    <meta-data android:name="com.oculus.ossplash.background" android:value="passthrough-contextual" />
+    <meta-data android:name="com.oculus.telemetry.project_guid" android:value="490203b2-885e-4cc4-a3bd-6b90031780d3" />
+    <meta-data android:name="com.oculus.supportedDevices" android:value="quest3|quest3s" tools:replace="android:value" />
+  </application>
+  <uses-feature android:name="android.hardware.vr.headtracking" android:version="1" android:required="true" />
+  <uses-feature android:name="oculus.software.handtracking" android:required="false" />
+  <uses-permission android:name="com.oculus.permission.HAND_TRACKING" />
+  <uses-permission android:name="com.oculus.permission.USE_ANCHOR_API" />
+  <uses-feature android:name="com.oculus.feature.PASSTHROUGH" android:required="true" />
+  <uses-permission android:name="com.oculus.permission.USE_SCENE" />
+  <uses-permission android:name="horizonos.permission.HEADSET_CAMERA" />
+  <uses-permission android:name="android.permission.CAMERA" />
+</manifest>
+```
+
 ### OVR and Passthrough Setup
 
 Once you have a valid scene, you must add the OVRCameraRig and OVRPassthroughLayer components

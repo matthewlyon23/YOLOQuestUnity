@@ -17,7 +17,7 @@ The project features several components which provide functionality for a number
 - A texture analyser to run the inference specified by the inference handler on a Texture2D.
 - A detected object class which provides information about an object identified by a model.
 - An object display manager which handles the spawning of models associated objects, defined by a mapping available in the Unity inspector.
-- A YOLO handler which runs inference, manages object display and manages post processing for YOLO11 models.
+- A YOLO handler which runs inference, manages object display and manages post-processing for YOLO11 models.
 - A Remote YOLO handler which manages communication with a [remoteyolo](https://github.com/matthewlyon23/remoteyolo) server, including the uploading of custom models.
     - When a .pt file is imported it is converted to the correct format to be place in the Custom Model insepctor field.
     - Only compatible with the [remoteyolo](https://github.com/matthewlyon23/remoteyolo) project.
@@ -28,11 +28,15 @@ The project features several components which provide functionality for a number
 - [Git LFS](https://git-lfs.com/)
 - [Unity 6000.0.20f1](https://unity.com/releases/editor/whats-new/6000.0.20#installs) with Android Build Support
   - Note: Whilst it is possible to open the project in Unity Editor Version 6000.0.20f1 or *later*, it is not recommended as this can cause bugs. Proceed at your own risk.
-- Windows
 - Packages:
   - Listed in [Packages/manifest.json](Packages/manifest.json)
   - Necessary packages will be installed automatically by the Unity Editor
 - Horizon OS version 76
+
+- Required Permissions:
+  - `com.oculus.permission.USE_SCENE`
+  - `horizonos.permission.HEADSET_CAMERA`
+  - `android.permission.CAMERA`
 
 ## Installation
 
@@ -73,8 +77,11 @@ YOLOHandler:
 RemoteYOLOHandler:
 - The object containing the Remote YOLO Handler must also contain one Camera component (not any of the AR cameras).
 
-PassthroughManager:
+QuestPassthroughManager:
 - The `allow unsafe code` option must be selected in the player settings.
+
+WebCamTextureManager:
+- The permissions `android.permission.CAMERA` and `horizonos.permission.HEADSET_CAMERA` must be obtained.
 
 ## Known Issues
 
